@@ -1,0 +1,16 @@
+[AdjustColor]
+low1	= Track(Default=0  ,Min=0,Max=255,Hint="補正最小値（YUY2の時はY、RGB24/32の時はB)")
+high1	= Track(Default=255,Min=0,Max=255,Hint="補正最大値（YUY2の時はY、RGB24/32の時はB)")
+low2	= Track(Default=0  ,Min=0,Max=255,Hint="補正最小値（YUY2の時はU、RGB24/32の時はG)")
+high2	= Track(Default=255,Min=0,Max=255,Hint="補正最大値（YUY2の時はU、RGB24/32の時はG)")
+low3	= Track(Default=0  ,Min=0,Max=255,Hint="補正最小値（YUY2の時はV、RGB24/32の時はR)")
+high3	= Track(Default=255,Min=0,Max=255,Hint="補正最大値（YUY2の時はV、RGB24/32の時はR)")
+
+loose	= Track(Default=2000,Min=0,Max=65535,Hint="データの最大最小の範囲の取りこぼすピクセル数(RGB,YUV)")
+looseUV	= Track(Default=2000,Min=0,Max=65535,Hint="サブ設定：UVの取りこぼしピクセル数をYの場合と別の値にする場合")
+
+center	= Track(Default=-1,Min=-1,Max=255,Hint="基準（中央）点を指定する（-1の場合は基準点なし）")
+centerUV= Track(Default=-1,Min=-1,Max=255,Hint="サブ設定：UVの基準（中央）点を指定する（-1の場合はcenterと同じ）")
+
+selectmax = Check(Default=false, Label="center時、前後のMAXでｽｹｰﾙ計算", Hint="false時はMINで計算")
+UV		= Check(Default=true, Label="UV補正あり(YUY2)", Hint="YUY2時、YだけでなくUVも補正する")

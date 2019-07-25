@@ -1,0 +1,34 @@
+[WarpSharp]
+depth         = Track(128, -256,256, ,, "ワープ深度")
+blur          = Track(3, 1,8, ,, "凹凸をぼかす回数。増やすと遅くなります")
+bump          = Track(128, 0, 255, ,, "凹凸検出時の閾値。増やすと効き目が鋭くなるなります")
+cubic         = Track(-0.6, -10.0,-0.1, ,198, "三次補間係数")	//0.05単位　Scale=0.05でもいいけどfloatの誤差で表示が変になります
+
+
+[UnsharpMask]
+strength      = Track(64, 0,255, ,, "強さ")
+radius        = Track(3, 1,8, ,, "ぼかす範囲")
+threshold     = Track(8, 0,255, ,, "閾値")
+
+
+[Xsharpen]
+strength      = Track(128, 0,255, ,, "強さ")
+threshold     = Track(8, 0,255, ,, "閾値")
+
+
+[UVTimingH]
+u        = Track(0, -16,16, ,128, "U")
+v        = Track(0, -16,16, ,128, "V")
+edge     = Check(false,"輪郭塗りつぶし","輪郭を塗りつぶすかどうか")
+
+[UVTimingV]
+u        = Track(0, -16,16, ,128, "U")
+v        = Track(0, -16,16, ,128, "V")
+edge     = Check(false,"輪郭塗りつぶし","輪郭を塗りつぶすかどうか")
+
+
+[KenKunNR]
+strength      = Track(256, 0,256, ,, "強さ")
+radius        = Track(2, 1,3, ,, "範囲")
+threshold     = Track(6, 0,256, ,, "閾値")
+

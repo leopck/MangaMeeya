@@ -1,0 +1,10 @@
+[Version]
+Signature="$CHICAGO$"
+AdvancedINF=2.0
+
+[DefaultInstall]
+DelReg = RegSPI
+
+[RegSPI]
+HKCU,"Software\HMS\SPI\IFPSD"
+HKCU,"Software\HMS\SPI\AXPSD"

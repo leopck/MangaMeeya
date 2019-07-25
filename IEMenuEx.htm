@@ -1,0 +1,49 @@
+<SCRIPT LANGUAGE="JavaScript" defer>
+
+var event  = external.menuArguments.event.srcElement;
+var seltxt = external.menuArguments.document.selection.createRange().text
+
+// 取得URL
+var url;
+
+if( seltxt!="" ){
+// テキスト選択からのイベント
+	var lines = seltxt.split("\n");
+	for( var i=0; i<lines.length; i++ ){
+		lines[i] = lines[i].replace(/\s/g,"");				// スペースをすべて取り除く
+		lines[i] = lines[i].replace(/^(h|)ttp:\/\//,"");	// 先頭の"http://"または"ttp://"を取り除く
+		if( url==null ){
+			url = "http://" + lines[i];
+		}
+		else{
+			url = url + "\n" + "http://" + lines[i];
+		}
+	}
+}
+else if( event.tagName=="IMG" ){
+// 画像上からのイベント
+	if( event.src.match(/^http:\/\//) ){
+		url = event.src;
+	}
+}
+else if( event.tagName=="A" ){
+// リンクからのイベント
+	// 先頭にhttp://が含まれる場合
+	if( event.href.match(/^http:\/\//) ){
+		url = event.href;
+		// 2chリンクの場合を考慮
+		url = url.replace(/ime\.st\/|ime\.nu\/|pinktower\.com\/\?*|http:\/\/nun\.nu\/\?/g,"");
+	}
+}
+</SCRIPT>
+
+
+<SCRIPT language="VBScript" defer>
+Dim WshShell
+Set WshShell = CreateObject("WScript.Shell")
+
+'実行ファイルのパス EXE_PATHをマンガミーヤの存在するパスに置換しますので、変数名はそのままにしてください
+CONST EXE_PATH = "D:\[  Essentials  ]\Graphics\2D\Viewers\MangaMeeya v7.4eng\MangaMeeya.exe"
+
+WshShell.Run Chr(34) & EXE_PATH & Chr(34) & " " & Chr(34) & url & Chr(34), 1
+</SCRIPT>

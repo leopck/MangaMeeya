@@ -1,0 +1,1 @@
+start C:\Windows\AppPatch\AppLoc.exe "C:\Program Files (x86)\MangaMeeya\MangaMeeya.exe" "/L0411"

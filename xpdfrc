@@ -1,0 +1,14 @@
+#キャラクタマップリソースフォルダのパスを設定してください
+cMapDir Adobe-Japan1 "C:\Program Files\Adobe\Acrobat 7.0\Resource\CMap"
+
+#フォント指定
+displayFontGDI	MS-Gothic		"ＭＳ ゴシック"
+displayFontGDI	ＭＳゴシック	"ＭＳ ゴシック"
+displayFontGDI	ＭＳ明朝		"ＭＳ 明朝"
+displayFontGDI	MS-Mincho		"ＭＳ 明朝"
+
+#読み込みタイプ(0:ページ単位　1:画像リソース単位)	Susieプラグインとして使う場合のみ有効
+loadType	0
+
+#読み込みスケール(%)	Susieプラグインとして使う場合のみ有効
+loadScale	100

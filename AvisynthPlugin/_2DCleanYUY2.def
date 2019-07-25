@@ -1,0 +1,12 @@
+[_2DCleanYUY2]
+interlaced = Check(Label="インターレース用",Hint="インターレース時、比較対象ラインを１ラインおきとする")
+thresholdY = Track(Default=9,Min=0,Max=256,Hint="輝度情報の閾値")
+thresholdU = Track(Min=0,Max=256,Hint="色差情報(Cb,B-Y)の閾値")
+thresholdV = Track(Min=0,Max=256,Hint="色差情報(Cr,R-Y)の閾値")
+radiusX    = Track(Default=2,Min=0,Max=3,Hint="比較する点の範囲")
+radiusY    = Track(Default=2,Min=0,Max=9,Hint="比較する点の範囲")
+dmode      = Track(Default=0,Min=0,Max=4,Hint="= 0 (通常）
+= 1 (エッジを黒で表示）
+= 2 (エッジを黒、他は白で表示）
+= 3 (エッジは、元の値と処理値との平均    new = (current + new + 1/2) / 2 )
+= 4 (エッジは、元の値。つまり処理しない  new = current)")

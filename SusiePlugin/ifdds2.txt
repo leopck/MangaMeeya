@@ -1,0 +1,90 @@
+SUSIE用 テクスチャ画像ローダープラグイン
+ifdds.spi v2.04
+
+
+画像ビュア SUSIE 用の画像ローダープラグインです。DirectX で使用する dds 形式
+の画像を読み込むことができます。ViX 等、SUSIE プラグインを用いる他のアプリ
+ケーションでも使用できます。
+
+・読み込み対応フォーマット
+A8R3G3B2  R3G3B2  A4L4  R5G6B5  A1R5G5B5  A4R4G4B4
+A8R8G8B8  A8B8G8R8  R8G8B8  A8L8  A8  L8
+Q8W8V8U8  V8U8  Q16W16V16U16  V16U16
+A2R10G10B10  A2B10G10R10
+A16B16G16R16  G16R16  L16
+A16B16G16R16F  G16R16F  R16F (fp16)
+A32B32G32R32F  G32R32F  R32F (fp32)
+PALETTEINDEXED1/2/4/8
+DXT1/DXT2/DXT3/DXT4/DXT5
+CxV8U8  3Dc(ATI2)
+他
+
+
+
+v2.04  Normal 圧縮 3Dc (ATI2) 形式への対応を行った。
+v2.03  HDR 展開時に問題があったバグ修正。
+v2.02  signed format の展開に問題があったので直した。その他読めなかったフォー
+       マットへの対応を行った。
+v2.01  A8L8 の bitcount が 8 になっていた問題修正。そのため A8/L8/A8L8 の 3
+       フォーマットで認識に失敗していた。nVIDIA の tool で出力した Q8W8V8U8 が
+       BUMPDUDV ではなく FourCC になっているので対応した。
+v2.00  DirectX のさまざまなファイルフォーマットに対応できるよう全部作り直した。
+v1.01  ifdds.spi で DXT1～DXT5 の圧縮テクスチャの読み込みが可能になった。
+
+
+以前付属していた ifzit.spi/ifspica.spi は含まれていませんので、必要な場合は
+v1.01 のアーカイブ (if3dpack.lzh) をご利用ください。
+
+
+●プラグインファイル
+
+ ifdds.spi	dds形式用 DirectXで使用されているテクスチャ画像形式に対応し
+		ます。
+
+
+
+●インストール
+
+SUSIE で使用する場合は、ifdds.spi を SUSIE のディレクトリ(susie.exeと同じ場所)
+にコピーしてください。次回の SUSIE 起動時から dds 画像を読み込めるようになり
+ます。
+
+古いバージョンの ifdds.spi が存在する場合はあらかじめ削除しておいてください。
+
+Vix の場合は、メニューの「その他」→「設定」から「プラグイン」の設定を行って
+ください。
+
+利用時に DirectX の Runtime は必要ありません。
+
+
+
+●注意点
+
+・mipmap/cubemap 等の追加情報は無視しています。
+・alpha channel は無視しています。
+・volume texture は未対応です。
+・pixel サイズが極端に小さい場合は変換誤差で多少暗めの表示になります。
+・fp16/fp32 16bit(64bit) 10bit 等の画像の場合、各チャンネル 8bit 以上のフル
+  カラーを超える情報が含まれていますが、tone map 等の変換を行わないため意図
+  した表示にならないことがあります。
+
+
+
+●利用条件
+
+フリーソフトウエアです。動作は無保証です。
+
+
+http://flatlib.main.jp/dench/index.html
+http://hp.vector.co.jp/authors/VA004474/
+
+
+2001/06/30 1.00	初期バージョン
+2001/07/07 1.01	DDS 読み込みで DXT1～DXT5に対応した
+2005/07/10 2.00 fp16/fp32 16bit/pixel 等読み込めるフォーマットを大幅に増やした
+2005/07/11 2.01 バグ修正 A8/A8L8/L8 修正、Q8W8V8U8 の nVIDIA FourCC 対応
+2005/07/12 2.02 バグ修正 Signed 演算
+2005/07/12 2.03 バグ修正 HDR 演算
+2005/07/12 2.04 3Dc(ATI2) に対応した
+小笠原博之 <oga@art.udn.ne.jp>
+

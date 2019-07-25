@@ -1,0 +1,48 @@
+[ColorYUY2]
+gain_y	= Track(Default=0,Min=-256,Max=256,Hint="輝度\"\n(値=0)を基点に拡大縮小(比率は±256で2倍)")
+gain_u	= Track(Default=0,Min=-256,Max=256,Hint="色差(Cb)\n(値=0)を基点に拡大縮小(比率は±256で2倍)")
+gain_v	= Track(Default=0,Min=-256,Max=256,Hint="色差(Cr)\n(値=0)を基点に拡大縮小(比率は±256で2倍)")
+gain_r	= Track(Default=0,Min=-256,Max=256,Hint="R成分\n(値=0)を基点に拡大縮小(比率は±256で2倍)")
+gain_g	= Track(Default=0,Min=-256,Max=256,Hint="G成分\n(値=0)を基点に拡大縮小(比率は±256で2倍)")
+gain_b	= Track(Default=0,Min=-256,Max=256,Hint="B成分\n(値=0)を基点に拡大縮小(比率は±256で2倍)")
+
+cont_y	= Track(Default=0,Min=-256,Max=256,Hint="輝度\nコントラスト指定\nセンタ(128)を基点に拡大縮小(比率は±256で2倍)")
+cont_u	= Track(Default=0,Min=-256,Max=256,Hint="色差(Cb)\nコントラスト指定\nセンタ(128)を基点に拡大縮小(比率は±256で2倍)")
+cont_v	= Track(Default=0,Min=-256,Max=256,Hint="色差(Cr)\nコントラスト指定\nセンタ(128)を基点に拡大縮小(比率は±256で2倍)")
+cont_r	= Track(Default=0,Min=-256,Max=256,Hint="R成分\nコントラスト指定\nセンタ(128)を基点に拡大縮小(比率は±256で2倍)")
+cont_g	= Track(Default=0,Min=-256,Max=256,Hint="G成分\nコントラスト指定\nセンタ(128)を基点に拡大縮小(比率は±256で2倍)")
+cont_b	= Track(Default=0,Min=-256,Max=256,Hint="B成分\nコントラスト指定\nセンタ(128)を基点に拡大縮小(比率は±256で2倍)")
+
+gamma_y	= Track(Default=0,Min=0,Max=256,Hint="輝度のガンマ値 (0で等倍)")
+gamma_u = Hide();
+gamma_v = Hide();
+gamma_r	= Track(Default=0,Min=0,Max=256,Hint="R成分のガンマ値 (0で等倍)")
+gamma_g	= Track(Default=0,Min=0,Max=256,Hint="G成分のガンマ値 (0で等倍)")
+gamma_b	= Track(Default=0,Min=0,Max=256,Hint="B成分のガンマ値 (0で等倍)")
+
+off_y	= Track(Default=0,Min=-255,Max=255,Hint="輝度オフセット\n指定値分シフトする(-255～255)")
+off_u	= Track(Default=0,Min=-255,Max=255,Hint="色差(Cb)オフセット\n指定値分シフトする(-255～255)")
+off_v	= Track(Default=0,Min=-255,Max=255,Hint="色差(Cr)オフセット\n指定値分シフトする(-255～255)")
+off_r	= Track(Default=0,Min=-255,Max=255,Hint="R成分オフセット\n指定値分シフトする(-255～255)")
+off_g	= Track(Default=0,Min=-255,Max=255,Hint="G成分オフセット\n指定値分シフトする(-255～255)")
+off_b	= Track(Default=0,Min=-255,Max=255,Hint="B成分オフセット\n指定値分シフトする(-255～255)")
+
+levels	= Edit(Hint="スケール補正 = \"TV->PC\" , \"PC->TV\" , \"PC->TV.Y\", \"\"\n(YUVのgain,off,cont,gammaより先に適用される)")
+opt     = Edit(Hint="\"coring\" : 出力結果をITU-R BT.601飽和指定する。\n(Yが16～235の範囲外の時は16又は235に、UVが16～240の範囲外の時は16又は240にする)")
+matrix	= Edit(Hint="\"rec.709\" : デバッグメッセージのRGB値をRec. BT.709に従って表示する。(デフォルトは Rec. BT.601)")
+debug	= Edit(Hint="0 (default) : none
+1            : 情報をデバッグメッセージ出力
+2            : Histogram(YUV)表示
+3            : Histogram(YUV)表示 + デバッグメッセージ表示
+4            : Histogram(RGB)表示
+5            : Histogram(RGB)表示 + デバッグメッセージ表示")
+hscale	= Edit(Hint="default=70 : Histogramのscale指定(10-100 %)")
+x	= Edit(Hint="座標(x,y),(x+1,y),(x+2,y),(x+3,y)
+(x,y+1),(x+1,y+1),(x+2,y+1),(x+3,y+1)のyuv値表示\n(Histogramありの場合に有効)")
+y	= Edit(Hint="座標(x,y),(x+1,y),(x+2,y),(x+3,y)
+(x,y+1),(x+1,y+1),(x+2,y+1),(x+3,y+1)のyuv値表示\n(Histogramありの場合に有効)")
+interpolation = Edit(Hint="YUY2で4pixel置きに前後のUV値から補間する。widthは4の倍数のこと
+= \"411->422\"  :pixel 4,5,8,9,12,13,...,(w-4),(w-3)が対象\n補間式 ( (n-1) + (n+1) ) / 2
+= \"411->422R\" :pixel 2,3,6,7,...,(w-6),(w-5)が対象\n補間式 ( (n-1) + (n+1) + 1) / 2")
+
+

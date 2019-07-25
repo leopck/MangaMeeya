@@ -1,0 +1,16 @@
+Right click Context Menu
+
+1. Go to regedit
+2. Go to HKEY_CLASSES_ROOT\*\shell\
+3. Create key named "For MangaMeeya"
+4. Create key named "command"
+5. Edit default string inside command to C:\Progra~2\MangaMeeya\MangaMeeya.exe %1
+
+Final result:
+HKEY_CLASSES_ROOT\*\shell\For MangeMeeya\command
+
+Shortcut
+
+1. Create shortcut from MangaMeeya
+2. Edit hotkey to F3
+3. Edit target to "C:\Program Files (x86)\MangaMeeya\MangaMeeya.exe" -1

@@ -1,0 +1,221 @@
+#フィルタ定義ファイル
+#[フィルタ名]
+#パラメータ名 = コントロール名(,,,,,,,,)
+///////////////////////////////////////////////////////////////////////////////////
+[クリッピング]
+left         = Track(Default=0,Min=0,Max=@width,Scale=4,Hint="左上X座標\nこのあとに他のフィルタ処理が必要な場合4ドット単位(4Byte境界確保のため)で変化させるのが無難です")#4ドット単位で
+top          = Track(Default=0,Min=0,Max=@height,Scale=1,Hint="左上Y座標")
+right        = Track(Default=0,Min=0,Max=@width,Scale=1,Hint="右上X座標")
+bottom       = Track(Default=0,Min=0,Max=@height,Scale=1,Hint="右上Y座標")
+align        = Check(Default=1,Label="自動アライメント",Hint="自動で幅が指定倍数になるように切り詰めます\nYUY2変換前や、画像サイズが偶数である条件のフィルタの前などの場合使用してください")
+align_width  = Track(Default=2,Min=1,Max=512,Scale=1,Hint="横幅を[align_width]の倍数になるように切り詰めます")
+align_height = Track(Default=2,Min=1,Max=512,Scale=1,Hint="高さを[align_height]の倍数になるように切り詰めます")
+blackpaint   = Check(Default=0,Label="塗りつぶし",Hint="クリッピング枠を黒で塗りつぶします")auto_clip    = Check(Default=0,Label="オートクリップ",Hint="無効部分を検索し、クリップします。\nleft,top,right,bottomパラメータは検索範囲となります。\n十分に大きく設定しておけばよいですが、検索範囲が多くなる分負荷が高くなります。")
+///////////////////////////////////////////////////////////////////////////////////
+[Crop]
+left         = Track(0,0,@width,4,,"左上X座標\nこのあとに他のフィルタ処理が必要な場合4ドット単位(4Byte境界確保のため)で変化させるのが無難です")#4ドット単位で
+top          = Track(0,0,@height,1,,"左上Y座標")
+width        = Track(@width,0,@width,1,,"クロップ後の幅")
+height       = Track(@height,0,@height,1,,"クロップ後の高さ")
+align        = Check(true,"自動アライメント","自動で幅が指定倍数になるように切り詰めます")
+align_width  = Track(2,1,512,1,,"横幅を[align_width]の倍数になるように切り詰めます")
+align_height = Track(1,1,512,1,,"高さを[align_height]の倍数になるように切り詰めます")
+blackpaint   = Check(false,"塗りつぶし","クリッピング枠を黒で塗りつぶします")
+auto_clip    = Check(Default=0,Label="オートクリップ",Hint="無効部分を検索し、クリップします。\nleft,top,right,bottomパラメータは検索範囲となります。\n十分に大きく設定しておけばよいですが、検索範囲が多くなる分負荷が高くなります。")
+
+/////////////////////////////////////////////////////////////////////////////////////
+[回転]
+Radio(true,"回転なし",0)
+Radio(false,"右90度回転",0)
+Radio(false,"180度回転",0)
+Radio(false,"左90度回転",0)
+Check(false,"左右反転")
+Check(false,"上下反転")
+Track(0,-45,45,0.5,Hint="補正角度(単位degree[度])")
+Track(@width/2,0,@width,1,Hint="補正回転中心X座標")
+Track(@height/2,0,@height,1,Hint="補正回転中心Y座標")
+Radio(true, "最近傍法",1)
+Radio(false,"線形補間",1)
+Radio(false,"バイキュービック法",1)
+Check(false,"グリッド線表示")
+Track(50,8,200,1,Hint="グリッド線間隔")
+Track(0,0,@grid_space,1,Hint="グリッド線表示位置")
+
+
+[リサイズ]
+Track(@width, 4,4096,2,,"リサイズ後の幅")	//2ドット単位での変化
+Track(@height,4,4096,2,,"リサイズ後の高さ")
+Radio(true,"平均画素法",0)
+Radio(false,"Lanczos3リサイズ",0)
+Radio(false, "バイキュービック法",0)
+Radio(false, "線形補間",0)
+Radio(false, "最近傍法",0)
+Radio(false, "平均画素+シャープネス弱",0)
+Radio(false, "平均画素+シャープネス強",0)
+
+
+[縦横比固定リサイズ]
+Track(1.0,0,4,0.1,Hint="スケールを指定します。1.0=100%　0.5=50%\n幅、高さ指定が0の場合のみパラメタは有効です")
+Track(0,0,4096,2,Hint="幅を指定してリサイズします。\n高さ指定が0の場合のみパラメタが有効です")	//2ドット単位での変化
+Track(0,0,4096,2,Hint="高さを指定してリサイズします。")
+Radio(false,"平均画素法",0)
+Radio(false,"Lanczos3リサイズ",0)
+Radio(false,"バイキュービック法",0)
+Radio(false,"線形補間",0)
+Radio(true, "最近傍法",0)
+Radio(false,"平均画素+シャープネス弱",0)
+Radio(false,"平均画素+シャープネス強",0)
+
+
+[複数枚表示]
+Track(Min=0,Max=2048,Scale=1,Hint="幅、高さどちらかのみ1以上の値をいれてください\n入力した片方の幅または高さを基準にリサイズして表示します")
+Track(Default=@wndheight,Min=0,Max=2048,Scale=1,Hint="幅、高さどちらかのみ1以上の値をいれてください\n入力した片方の幅または高さを基準にリサイズして表示します")
+Edit(Default="",Width=280,Line=3,Hint="現在のページからの増分を指定します
+現在5ページ目を表示していて、\"-1 0 1\"と入力すれば4,5,6ページが横一行に表示されます
+複数行にわたって表示する場合は改行をいれてください")
+Hide(Default=@page)
+
+
+[テキスト表示]
+Track(Default=0,Min=0,Max=@width,Scale=1,Hint="テキストを表示する左上X座標\n縦書きの場合は右上X座標です")
+Track(Default=0,Min=0,Max=@height,Scale=1,Hint="テキストを表示する左上Y座標\n縦書きの場合は右上Y座標です")
+Edit(Default="",Width=280,Line=3,Hint="表示テキスト")
+Edit(Default="0xffffff",Hint="文字の色をRGBで指定(各8bit)\n0xff0000は赤です)")
+Edit(Default="0x000000",Hint="文字の縁色をRGB24で指定\n縁、影処理をしない場合は無視されます")
+Edit(Default="0x406080",Hint="背景色。背景透過の場合この色が透過色となります")
+Check(Default=true,Label="背景透過",Hint="背景色を透過します")
+Edit(Default="ＭＳ ゴシック",Hint="描画する文字に使うフォントを指定")
+Track(Default=24,Min=8,Max=96,Scale=1,Hint="フォントの高さを指定します")
+Track(Default=400,Min=0,Max=1000,Scale=100,Hint="フォントの太さを指定します")
+Check(Default=false,Label="イタリック体(斜体)",Hint="斜体にするかどうか")
+Check(Default=false,Label="アンダーライン",Hint="下線を付けるかどうか")
+Check(Default=false,Label="取り消し線",Hint="取り消し線を付けるかどうか")
+Track(Default=2,Min=0,Max=4,Scale=1,Hint="出力品質")
+Check(Default=true,Label="固定ピッチ",Hint="フォントの各文字の幅を固定するかどうか")
+Check(Default=false,Label="縦書き",Hint="縦書き指定")
+Track(Default=1,Min=-64,Max=64,Scale=1,Hint="文字から影へのオフセットX軸距離\n縁ありの場合は縁取りのサイズ")
+Track(Default=1,Min=-64,Max=64,Scale=1,Hint="文字から影へのオフセットY軸距離\n縁ありの場合は縁取りのサイズ")
+Radio(Default=true,Label="上書き",Group=0,Hint="特別なブレンド処理はしません")
+Radio(Default=false,Label="加算ブレンド",Group=0,Hint="飽和加算ブレンド処理でブレンドします")
+Radio(Default=false,Label="アルファブレンド",Group=0,Hint="アルファブレンド処理を行います\nここでのアルファ値はテキスト画像の不透明度(0～255)です\nこの不透明度は色数字の最上位バイトで指定します\n画像と白色のテキストを半々でブレンドする場合は\"0x7fffffff\"と指定します")
+Radio(Default=true,Label="文字装飾なし",Group=1,Hint="特別な文字の装飾は行いません")
+Radio(Default=false,Label="縁あり",Group=1,Hint="縁色で指定した色で文字を縁取ります")
+Radio(Default=false,Label="影あり",Group=1,Hint="縁色で指定した色で文字に影をつけます")
+Check(Default=false,Label="アンチエイリアシング処理","アンチエイリアシングを行い、文字のジャギーを低減します。")
+
+
+[モノクロ化_2諧調]
+Track(128,0,255,Hint="明るさがこの値よりも大きいと、白に、小さいと黒になります") 
+
+
+[矩形転送]
+Track(0,0,@width ,Hint="コピー先長方形の左上隅の x 座標")
+Track(0,0,@height,Hint="コピー先長方形の左上隅の y 座標")
+Track(0,0,@width ,Hint="コピー先長方形の幅")
+Track(0,0,@height,Hint="コピー先長方形の高さ")
+Track(@page,1,@totalpage,Hint="コピー元ページ")
+Track(0,0,@width ,Hint="コピー元長方形の左上隅の x 座標")
+Track(0,0,@height,Hint="コピー元長方形の左上隅の y 座標")
+Track(@DstWidth,0,@width ,Hint="コピー元長方形の幅")
+Track(@DstHeight,0,@height,Hint="コピー元長方形の高さ")
+
+
+[トーンカーブ]
+Track(0.0 ,0,1,0.05,20 ,Hint="P1(始点) y座標")
+Track(0.25,0,1,0.05,20 ,Hint="P2 y座標")
+Track(0.5 ,0,1,0.05,20 ,Hint="P3 y座標")
+Track(0.75,0,1,0.05,20 ,Hint="P4 y座標")
+Track(1.0 ,0,1,0.05,20 ,Hint="P5(終点) y座標")
+Check(Default=false,Label="グラフ表示","左下にトーンカーブのグラフを表示します。(256x256)")
+
+
+[減色]
+Track(256, 2,256,1,,"色数(パレット数)[2-256]を指定します。")
+Radio(true,"(低画質)",0,"メディアンカット法によりパレットを決定し\n色空間を分割した２分木を利用しプロットします\n最も近いパレットが選択される保証はないため画質は落ちます。")
+Radio(false,"(中画質)",0,"メディアンカット法によりパレットを決定し\n最も距離が近いパレット値をプロットします。")
+Radio(false,"(高画質)",0,"Padie(多摩川源五郎氏作の減色ソフト)ルーチンを利用します\n時間がかかりますが高画質に減色できます。")
+Track(0, 0,10,1,,"数値が大きいほどディザリング強度が高まります\n強度を上げすぎると誤差の蓄積により予期せぬ色が配置されることがあります\n強度を0にするとディザリングは無効になります。")
+Check(false, "固定パレット使用","216色のWEBセーフパレットを使用します。")
+Check(false, "色数表示","原画像の色数と減色後の色数を表示します。")
+
+
+[アンシャープマスク]
+Track(64, 0,255, ,, "強さ")
+Track(1, 1,5, ,, "ぼかす範囲")
+Track(8, 0,255, ,, "閾値")
+
+
+[YUY2へ変換]
+Check(false, "PC->TVスケール変換","ITU-R BT.601規定スケールへ変換します。Y[16-235] Cb,Cr[16-240]")
+
+
+[YV12へ変換]
+Check(false, "PC->TVスケール変換","ITU-R BT.601規定スケールへ変換します。Y[16-235] Cb,Cr[16-240]")
+
+
+[RGB24へ変換]
+Check(false, "TV=>PCスケール変換","YC伸張を行います。R,G,B[0-255]")
+
+
+[RGB32へ変換]
+Check(false, "TV=>PCスケール変換","YC伸張を行います。R,G,B[0-255]")
+
+[グレースケールへ変換]
+Check(false, "グレースケール検知","グレースケールと判断したもののみ変換対象にします")
+Track(120,0,255,Hint="グレースケールと判断するCb(青色差)下限値") 
+Track(136,0,255,Hint="グレースケールと判断するCb(青色差)上限値") 
+Track(120,0,255,Hint="グレースケールと判断するCr(赤色差)下限値") 
+Track(136,0,255,Hint="グレースケールと判断するCr(赤色差)上限値") 
+Track(0.2,0,100,0.1,Hint="頻度敷値(%)\n色差の上下限値から溢れる画素数の割合が\n指定敷値を越えた時グレースケールと判断する")
+Track(0.299,0,1,,50 ,Hint="グレースケール変換時の(赤)成分割合")
+Track(0.587,0,1,,50 ,Hint="グレースケール変換時の(緑)成分割合")
+Track(0.114,0,1,,50 ,Hint="グレースケール変換時の(青)成分割合")
+Check(true, "正規化","RGB各成分の総和が1.0になるように正規化します")
+
+
+[スペース追加]
+Track(0,0,1024,Hint="左端追加スペースサイズ(単位ピクセル)")
+Track(0,0,1024,Hint="上端追加スペースサイズ(単位ピクセル)")
+Track(0,0,1024,Hint="右端追加スペースサイズ(単位ピクセル)")
+Track(0,0,1024,Hint="下端追加スペースサイズ(単位ピクセル)")
+Radio(true,"単色スペース",0,"追加するスペース範囲は単色で塗りつぶします\n色はcolorパラメタで設定します")
+Radio(false,"ミラーコピー",0,"追加するスペース範囲は画像端から反転コピーされた画像になります")
+Edit("0xffffff",Hint="スペースを塗りつぶす色を設定します\nRGBで指定(各8bit)\n0xff0000は赤です")
+
+
+[ゆがみ補正]
+Track(@width/2,0,@width ,Hint="中心位置")
+Track(100,0,@width ,Hint="左側補正範囲")
+Track(100,0,@width ,Hint="右側補正範囲")
+Track(0.00,0,1,,40 ,Hint="奥行き")
+Track(0.03,0,1,,40 ,Hint="奥行き")
+Track(0.07,0,1,,40 ,Hint="奥行き")
+Track(0.12,0,1,,40 ,Hint="奥行き")
+Track(0.25,0,1,,40 ,Hint="奥行き")
+Track(0.50,0,1,,40 ,Hint="奥行き")
+Track(1.00,0,1,,40 ,Hint="奥行き")
+Track(0.50,0,1,,40 ,Hint="奥行き")
+Track(0.25,0,1,,40 ,Hint="奥行き")
+Track(0.12,0,1,,40 ,Hint="奥行き")
+Track(0.07,0,1,,40 ,Hint="奥行き")
+Track(0.03,0,1,,40 ,Hint="奥行き")
+Track(0.00,0,1,,40 ,Hint="奥行き")
+Track(0.5 ,0,1,,40 ,Hint="光源角度")
+Track(1.0 ,0,1,,40 ,Hint="拡散反射率(左補正範囲)")
+Track(1.0 ,0,1,,40 ,Hint="拡散反射率(右補正範囲)")
+Track(0.0 ,-1,1,0.05,40 ,Hint="環境光(左補正範囲)")
+Track(0.0 ,-1,1,0.05,40 ,Hint="環境光(右補正範囲)")
+Track(0.0 ,0,1,,40 ,Hint="鏡面反射率(左補正範囲)")
+Track(0.0 ,0,1,,40 ,Hint="鏡面反射率(右補正範囲)")
+Check(false, "補正範囲カット","補正は行わず、指定範囲を削除します\n綴じ代部分のトリミング用途")
+Check(false, "グラフ表示","上部にグラフを表示します")
+
+
+[レベル補正]
+Track(0  ,0,254,Hint="入力レベル(Low)")
+Track(255,1,255,Hint="入力レベル(High)")
+Track((@low+@high+1)/2,1,255,Hint="入力レベル(Middle)")
+Check(false, "階調補正","誤差拡散法により階調補正を行います")
+Track(0  ,0,254,Hint="出力レベル(Min)")
+Track(255,1,255,Hint="出力レベル(Max)")
+Check(false, "ヒストグラム表示","輝度ヒストグラムを表示します")
