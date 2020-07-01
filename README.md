@@ -19,6 +19,11 @@ Project to host the MangaMeeya binaries and codes. Purpose is to reverse enginee
 - Multi-threading support
 - Android/iOS support?
 
+# Feature in considerations
+
+- URL loading -> no performance gain though?
+- Readers are able to submit an edit on the translation back to the community -> But where? And does this flow make sense to ppl?
+
 # Programming language
 
 - Rust (memory-safe language, high performance and supports WebASM for Web, lack Android/iPhone support)
