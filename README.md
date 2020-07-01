@@ -26,7 +26,7 @@ Project to host the MangaMeeya binaries and codes. Purpose is to reverse enginee
 
 # Programming language
 
-- Rust (memory-safe language, high performance and supports WebASM for Web, lack Android/iPhone support)
+- Rust (memory-safe language, high performance and supports WebASM for Web, lack Android/iPhone support, multi-language supported as well)
 
 # Debugger used
 
