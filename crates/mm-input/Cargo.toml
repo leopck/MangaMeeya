@@ -1,0 +1,17 @@
+[package]
+name = "mm-input"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+thiserror.workspace = true
+serde.workspace = true
+winit.workspace = true
+tracing.workspace = true
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+gilrs.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true

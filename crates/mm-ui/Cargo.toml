@@ -1,0 +1,15 @@
+[package]
+name = "mm-ui"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+thiserror.workspace = true
+egui.workspace = true
+tracing.workspace = true
+mm-core.workspace = true
+mm-render.workspace = true
+mm-input.workspace = true
+mm-config.workspace = true
+mm-i18n.workspace = true

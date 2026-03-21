@@ -1,0 +1,20 @@
+[package]
+name = "mm-image"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+thiserror.workspace = true
+image.workspace = true
+rayon.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+criterion.workspace = true
+proptest.workspace = true
+insta.workspace = true
+
+[[bench]]
+name = "image_bench"
+harness = false

@@ -1,0 +1,85 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/mm-core",
+    "crates/mm-archive",
+    "crates/mm-image",
+    "crates/mm-render",
+    "crates/mm-input",
+    "crates/mm-config",
+    "crates/mm-ui",
+    "crates/mm-plugin",
+    "crates/mm-i18n",
+    "apps/desktop",
+    "apps/web",
+    "xtask",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+authors = ["MangaMeeya Contributors"]
+license = "MIT"
+repository = "https://github.com/user/mangameeya"
+
+[workspace.dependencies]
+# Error handling
+anyhow = "1"
+thiserror = "2"
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.8"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Async
+rayon = "1"
+
+# Image
+image = "0.25"
+
+# Archive
+zip = "2"
+
+# GPU
+wgpu = "24"
+
+# GUI
+egui = "0.31"
+eframe = { version = "0.31", default-features = false, features = ["wgpu", "persistence"] }
+
+# Input
+winit = "0.30"
+gilrs = "0.11"
+
+# i18n
+fluent = "0.16"
+fluent-bundle = "0.15"
+
+# Testing
+criterion = { version = "0.5", features = ["html_reports"] }
+proptest = "1"
+insta = "1"
+
+# Internal crates
+mm-core = { path = "crates/mm-core" }
+mm-archive = { path = "crates/mm-archive" }
+mm-image = { path = "crates/mm-image" }
+mm-render = { path = "crates/mm-render" }
+mm-input = { path = "crates/mm-input" }
+mm-config = { path = "crates/mm-config" }
+mm-ui = { path = "crates/mm-ui" }
+mm-plugin = { path = "crates/mm-plugin" }
+mm-i18n = { path = "crates/mm-i18n" }
+
+[workspace.features]
+default = ["simd", "gpu"]
+simd = []
+gpu = []
+wasm = []
+plugin = []
+gamepad = []

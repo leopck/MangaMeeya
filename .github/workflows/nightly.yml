@@ -1,0 +1,190 @@
+name: Nightly Scale Tests
+
+on:
+  schedule:
+    # Run at 3 AM UTC every day
+    - cron: "0 3 * * *"
+  workflow_dispatch:  # Allow manual trigger
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  # ============================================================
+  # Scale Tests - Large datasets
+  # ============================================================
+  scale-tests:
+    name: Scale Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install system deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libudev-dev libwayland-dev libxkbcommon-dev libvulkan-dev libx11-dev libxi-dev libxrandr-dev libxcursor-dev
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: scale-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: scale-${{ runner.os }}-
+
+      - name: Generate large test data
+        run: cargo run --release --package xtask -- generate-testdata --output testdata/generated --large
+
+      - name: List generated test data
+        run: |
+          echo "=== Test Data ==="
+          du -sh testdata/generated/* 2>/dev/null || echo "No data"
+          echo ""
+          echo "=== File counts ==="
+          find testdata/generated -type f | wc -l
+          echo "total files"
+
+      - name: Run scale tests
+        run: cargo test --workspace --release -- --ignored 2>&1 | tee scale-output.txt || true
+
+      - name: Run full benchmarks with large data
+        run: cargo bench --workspace 2>&1 | tee bench-output.txt || true
+
+      - name: Memory profiling (peak RSS during test)
+        run: |
+          echo "=== Memory profile during archive load ===" > memory-report.txt
+          /usr/bin/time -v cargo test --release --package mm-archive -- --nocapture 2>&1 | tee -a memory-report.txt || true
+          echo "" >> memory-report.txt
+          echo "=== Memory profile during image decode ===" >> memory-report.txt
+          /usr/bin/time -v cargo test --release --package mm-image -- --nocapture 2>&1 | tee -a memory-report.txt || true
+
+      - name: Generate nightly report
+        shell: bash
+        run: |
+          echo "# Nightly Scale Test Report" > nightly-report.md
+          echo "" >> nightly-report.md
+          echo "**Date:** $(date -u '+%Y-%m-%d %H:%M UTC')" >> nightly-report.md
+          echo "**Commit:** ${{ github.sha }}" >> nightly-report.md
+          echo "**CPU:** $(lscpu | grep 'Model name' | sed 's/.*: *//')" >> nightly-report.md
+          echo "**RAM:** $(free -h | grep Mem | awk '{print $2}')" >> nightly-report.md
+          echo "" >> nightly-report.md
+
+          echo "## Test Data" >> nightly-report.md
+          echo '```' >> nightly-report.md
+          du -sh testdata/generated/* 2>/dev/null >> nightly-report.md || echo "No data" >> nightly-report.md
+          echo '```' >> nightly-report.md
+          echo "" >> nightly-report.md
+
+          echo "## Scale Test Results" >> nightly-report.md
+          echo '```' >> nightly-report.md
+          cat scale-output.txt >> nightly-report.md 2>/dev/null || echo "No scale tests ran" >> nightly-report.md
+          echo '```' >> nightly-report.md
+          echo "" >> nightly-report.md
+
+          echo "## Benchmark Results" >> nightly-report.md
+          echo '```' >> nightly-report.md
+          cat bench-output.txt >> nightly-report.md 2>/dev/null || echo "No benchmarks ran" >> nightly-report.md
+          echo '```' >> nightly-report.md
+          echo "" >> nightly-report.md
+
+          echo "## Memory Report" >> nightly-report.md
+          echo '```' >> nightly-report.md
+          cat memory-report.txt >> nightly-report.md 2>/dev/null || echo "No memory data" >> nightly-report.md
+          echo '```' >> nightly-report.md
+
+          cat nightly-report.md >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload nightly report
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-report-${{ github.run_number }}
+          path: |
+            nightly-report.md
+            memory-report.txt
+          retention-days: 30
+
+      - name: Upload criterion HTML reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-criterion-${{ github.run_number }}
+          path: target/criterion/
+          retention-days: 30
+          if-no-files-found: ignore
+
+  # ============================================================
+  # Build size tracking
+  # ============================================================
+  size-tracking:
+    name: Binary Size Tracking
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install system deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libudev-dev libwayland-dev libxkbcommon-dev libvulkan-dev libx11-dev libxi-dev libxrandr-dev libxcursor-dev
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: size-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: size-${{ runner.os }}-
+
+      - name: Build release
+        run: cargo build --release --package mangameeya
+
+      - name: Build release (stripped)
+        run: |
+          cp target/release/mangameeya target/release/mangameeya-stripped || true
+          strip target/release/mangameeya-stripped 2>/dev/null || true
+
+      - name: Size report
+        run: |
+          echo "# Binary Size Report" > size-report.md
+          echo "" >> size-report.md
+          echo "**Date:** $(date -u '+%Y-%m-%d %H:%M UTC')" >> size-report.md
+          echo "**Commit:** ${{ github.sha }}" >> size-report.md
+          echo "" >> size-report.md
+          echo "| Binary | Size |" >> size-report.md
+          echo "|--------|------|" >> size-report.md
+
+          if [ -f target/release/mangameeya ]; then
+            SIZE=$(stat -c%s target/release/mangameeya)
+            echo "| Release | $(echo "scale=2; $SIZE / 1048576" | bc) MB |" >> size-report.md
+          fi
+
+          if [ -f target/release/mangameeya-stripped ]; then
+            SIZE=$(stat -c%s target/release/mangameeya-stripped)
+            echo "| Stripped | $(echo "scale=2; $SIZE / 1048576" | bc) MB |" >> size-report.md
+          fi
+
+          echo "" >> size-report.md
+
+          # Per-crate sizes (compile units)
+          echo "## Dependency Count" >> size-report.md
+          echo '```' >> size-report.md
+          cargo tree --workspace -e normal --depth 1 2>/dev/null | head -50 >> size-report.md
+          echo '```' >> size-report.md
+
+          cat size-report.md >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload size report
+        uses: actions/upload-artifact@v4
+        with:
+          name: size-report-${{ github.run_number }}
+          path: size-report.md

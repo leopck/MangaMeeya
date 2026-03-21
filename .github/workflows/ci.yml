@@ -1,0 +1,645 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main, develop]
+  pull_request:
+    branches: [master, main, develop]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+  RUSTFLAGS: "-D warnings"
+
+# Cancel in-progress runs for the same branch/PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ============================================================
+  # Code Quality Checks
+  # ============================================================
+  lint:
+    name: Lint & Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache cargo registry & build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: lint-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: lint-${{ runner.os }}-
+
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+      - name: Run clippy (all targets)
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: Check for unused dependencies
+        run: |
+          cargo install cargo-machete --locked || true
+          cargo machete || true  # Advisory, don't fail CI yet
+
+  # ============================================================
+  # Tests - All platforms
+  # ============================================================
+  test:
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install system deps (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libudev-dev \
+            libwayland-dev \
+            libxkbcommon-dev \
+            libvulkan-dev \
+            libx11-dev \
+            libxi-dev \
+            libxrandr-dev \
+            libxcursor-dev
+
+      - name: Cache cargo registry & build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: test-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: test-${{ runner.os }}-
+
+      - name: Build workspace
+        run: cargo build --workspace
+
+      - name: Run all tests
+        run: cargo test --workspace -- --nocapture 2>&1 | tee test-output.txt
+
+      - name: Generate test report
+        if: always()
+        shell: bash
+        run: |
+          echo "# Test Report - ${{ matrix.os }}" > test-report.md
+          echo "" >> test-report.md
+          echo "**Date:** $(date -u '+%Y-%m-%d %H:%M UTC')" >> test-report.md
+          echo "**Rust:** $(rustc --version)" >> test-report.md
+          echo "**OS:** ${{ matrix.os }}" >> test-report.md
+          echo "" >> test-report.md
+
+          echo "## Summary" >> test-report.md
+          echo '```' >> test-report.md
+          grep "test result:" test-output.txt >> test-report.md || echo "No test results found" >> test-report.md
+          echo '```' >> test-report.md
+          echo "" >> test-report.md
+
+          # Count totals
+          PASSED=$(grep "test result:" test-output.txt | awk '{sum += $4} END {print sum+0}')
+          FAILED=$(grep "test result:" test-output.txt | awk '{sum += $6} END {print sum+0}')
+          IGNORED=$(grep "test result:" test-output.txt | awk '{sum += $8} END {print sum+0}')
+          echo "| Metric | Count |" >> test-report.md
+          echo "|--------|-------|" >> test-report.md
+          echo "| Passed | $PASSED |" >> test-report.md
+          echo "| Failed | $FAILED |" >> test-report.md
+          echo "| Ignored | $IGNORED |" >> test-report.md
+          echo "" >> test-report.md
+
+          echo "## Per-Crate Results" >> test-report.md
+          echo '```' >> test-report.md
+          grep -E "(Running|test result:)" test-output.txt >> test-report.md || true
+          echo '```' >> test-report.md
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report-${{ matrix.os }}
+          path: test-report.md
+
+  # ============================================================
+  # Test with minimal deps (no default features)
+  # ============================================================
+  test-minimal:
+    name: Test (minimal features)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install system deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libudev-dev libwayland-dev libxkbcommon-dev libvulkan-dev libx11-dev libxi-dev libxrandr-dev libxcursor-dev
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: minimal-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: minimal-${{ runner.os }}-
+
+      - name: Build with no default features
+        run: cargo build --workspace --no-default-features
+
+      - name: Test with no default features
+        run: cargo test --workspace --no-default-features
+
+  # ============================================================
+  # MSRV Check
+  # ============================================================
+  msrv:
+    name: MSRV Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust 1.85.0 (edition 2024 minimum)
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.85.0"
+
+      - name: Install system deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libudev-dev libwayland-dev libxkbcommon-dev libvulkan-dev libx11-dev libxi-dev libxrandr-dev libxcursor-dev
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: msrv-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: msrv-${{ runner.os }}-
+
+      - name: Check MSRV compiles
+        run: cargo check --workspace
+        env:
+          RUSTFLAGS: ""  # Don't fail on warnings for older compiler
+
+  # ============================================================
+  # Security Audit
+  # ============================================================
+  audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install cargo-audit
+        run: cargo install cargo-audit --locked
+
+      - name: Run security audit
+        run: cargo audit || true  # Advisory for now
+
+  # ============================================================
+  # Build Release Binaries - All platforms
+  # ============================================================
+  build-release:
+    name: Build (${{ matrix.target.name }})
+    runs-on: ${{ matrix.target.os }}
+    needs: [lint, test]
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - name: Windows x86_64
+            os: windows-latest
+            rust-target: x86_64-pc-windows-msvc
+            artifact: mangameeya-windows-x64
+            binary: mangameeya.exe
+          - name: Windows ARM64
+            os: windows-latest
+            rust-target: aarch64-pc-windows-msvc
+            artifact: mangameeya-windows-arm64
+            binary: mangameeya.exe
+          - name: Linux x86_64
+            os: ubuntu-latest
+            rust-target: x86_64-unknown-linux-gnu
+            artifact: mangameeya-linux-x64
+            binary: mangameeya
+          - name: Linux ARM64
+            os: ubuntu-latest
+            rust-target: aarch64-unknown-linux-gnu
+            artifact: mangameeya-linux-arm64
+            binary: mangameeya
+            cross: true
+          - name: macOS x86_64
+            os: macos-latest
+            rust-target: x86_64-apple-darwin
+            artifact: mangameeya-macos-x64
+            binary: mangameeya
+          - name: macOS ARM64 (Apple Silicon)
+            os: macos-latest
+            rust-target: aarch64-apple-darwin
+            artifact: mangameeya-macos-arm64
+            binary: mangameeya
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target.rust-target }}
+
+      - name: Install system deps (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libudev-dev \
+            libwayland-dev \
+            libxkbcommon-dev \
+            libvulkan-dev \
+            libx11-dev \
+            libxi-dev \
+            libxrandr-dev \
+            libxcursor-dev
+
+      - name: Install cross-compilation deps (Linux ARM64 on x64)
+        if: matrix.target.cross == true
+        run: |
+          sudo dpkg --add-architecture arm64
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+          sudo apt-get install -y libudev-dev:arm64 || true
+          echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
+          echo "PKG_CONFIG_SYSROOT_DIR=/usr/aarch64-linux-gnu" >> $GITHUB_ENV
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: release-${{ matrix.target.rust-target }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: release-${{ matrix.target.rust-target }}-
+
+      - name: Build release binary
+        run: cargo build --release --package mangameeya --target ${{ matrix.target.rust-target }}
+
+      - name: Get binary size
+        shell: bash
+        run: |
+          BINARY_PATH="target/${{ matrix.target.rust-target }}/release/${{ matrix.target.binary }}"
+          if [ -f "$BINARY_PATH" ]; then
+            SIZE=$(ls -la "$BINARY_PATH" | awk '{print $5}')
+            SIZE_MB=$(echo "scale=2; $SIZE / 1048576" | bc)
+            echo "Binary size: ${SIZE_MB} MB ($SIZE bytes)"
+            echo "BINARY_SIZE=${SIZE_MB}MB" >> $GITHUB_ENV
+          fi
+
+      - name: Prepare artifact
+        shell: bash
+        run: |
+          mkdir -p dist
+          cp "target/${{ matrix.target.rust-target }}/release/${{ matrix.target.binary }}" dist/ || true
+          echo "${{ matrix.target.name }}" > dist/BUILD_INFO.txt
+          echo "Target: ${{ matrix.target.rust-target }}" >> dist/BUILD_INFO.txt
+          echo "Commit: ${{ github.sha }}" >> dist/BUILD_INFO.txt
+          echo "Date: $(date -u '+%Y-%m-%d %H:%M UTC')" >> dist/BUILD_INFO.txt
+          echo "Rust: $(rustc --version)" >> dist/BUILD_INFO.txt
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.target.artifact }}
+          path: dist/
+          retention-days: 30
+
+  # ============================================================
+  # WebAssembly Build
+  # ============================================================
+  build-wasm:
+    name: Build (WebAssembly)
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Install wasm-pack
+        run: cargo install wasm-pack --locked
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: wasm-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: wasm-${{ runner.os }}-
+
+      - name: Build WASM
+        run: wasm-pack build apps/web --target web --release
+        continue-on-error: true  # WASM build may have deps issues in early phases
+
+      - name: Measure WASM bundle size
+        if: success()
+        run: |
+          if [ -f apps/web/pkg/mangameeya_web_bg.wasm ]; then
+            SIZE=$(ls -la apps/web/pkg/mangameeya_web_bg.wasm | awk '{print $5}')
+            SIZE_MB=$(echo "scale=2; $SIZE / 1048576" | bc)
+            echo "WASM size: ${SIZE_MB} MB ($SIZE bytes)"
+            GZIP_SIZE=$(gzip -c apps/web/pkg/mangameeya_web_bg.wasm | wc -c)
+            GZIP_MB=$(echo "scale=2; $GZIP_SIZE / 1048576" | bc)
+            echo "WASM gzipped: ${GZIP_MB} MB ($GZIP_SIZE bytes)"
+          fi
+
+      - name: Upload WASM artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mangameeya-wasm
+          path: apps/web/pkg/
+          retention-days: 30
+
+  # ============================================================
+  # Benchmarks
+  # ============================================================
+  benchmarks:
+    name: Benchmarks
+    runs-on: ubuntu-latest
+    needs: [test]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install system deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libudev-dev libwayland-dev libxkbcommon-dev libvulkan-dev libx11-dev libxi-dev libxrandr-dev libxcursor-dev
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: bench-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: bench-${{ runner.os }}-
+
+      - name: Generate test data
+        run: cargo run --release --package xtask -- generate-testdata --output testdata/generated
+
+      - name: Run benchmarks
+        run: |
+          cargo bench --workspace 2>&1 | tee bench-output.txt || true
+
+      - name: Generate performance report
+        shell: bash
+        run: |
+          echo "# Performance Report" > perf-report.md
+          echo "" >> perf-report.md
+          echo "**Date:** $(date -u '+%Y-%m-%d %H:%M UTC')" >> perf-report.md
+          echo "**Commit:** ${{ github.sha }}" >> perf-report.md
+          echo "**Runner:** $(uname -a)" >> perf-report.md
+          echo "**CPU:** $(lscpu | grep 'Model name' | sed 's/.*: *//')" >> perf-report.md
+          echo "" >> perf-report.md
+
+          echo "## Benchmark Results" >> perf-report.md
+          echo '```' >> perf-report.md
+          cat bench-output.txt >> perf-report.md
+          echo '```' >> perf-report.md
+          echo "" >> perf-report.md
+
+          # Binary sizes
+          echo "## Binary Sizes" >> perf-report.md
+          echo "| Target | Size |" >> perf-report.md
+          echo "|--------|------|" >> perf-report.md
+          if [ -f target/release/mangameeya ]; then
+            SIZE=$(ls -la target/release/mangameeya | awk '{print $5}')
+            echo "| Linux release | $(echo "scale=2; $SIZE / 1048576" | bc) MB |" >> perf-report.md
+          fi
+          echo "" >> perf-report.md
+
+          # Test data generation stats
+          echo "## Test Data Stats" >> perf-report.md
+          echo '```' >> perf-report.md
+          ls -lhR testdata/generated/ 2>/dev/null | head -30 >> perf-report.md || echo "No test data" >> perf-report.md
+          echo '```' >> perf-report.md
+
+      - name: Upload performance report
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-report
+          path: perf-report.md
+
+      - name: Upload criterion reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: criterion-reports
+          path: target/criterion/
+          retention-days: 14
+          if-no-files-found: ignore
+
+  # ============================================================
+  # Code Coverage
+  # ============================================================
+  coverage:
+    name: Code Coverage
+    runs-on: ubuntu-latest
+    needs: [test]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
+
+      - name: Install system deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libudev-dev libwayland-dev libxkbcommon-dev libvulkan-dev libx11-dev libxi-dev libxrandr-dev libxcursor-dev
+
+      - name: Install cargo-llvm-cov
+        run: cargo install cargo-llvm-cov --locked
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: cov-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: cov-${{ runner.os }}-
+
+      - name: Generate coverage
+        run: |
+          cargo llvm-cov --workspace --lcov --output-path lcov.info 2>&1 | tee coverage-output.txt
+          cargo llvm-cov --workspace --text 2>&1 | tee coverage-text.txt
+
+      - name: Generate coverage report
+        shell: bash
+        run: |
+          echo "# Code Coverage Report" > coverage-report.md
+          echo "" >> coverage-report.md
+          echo "**Date:** $(date -u '+%Y-%m-%d %H:%M UTC')" >> coverage-report.md
+          echo "**Commit:** ${{ github.sha }}" >> coverage-report.md
+          echo "" >> coverage-report.md
+
+          echo "## Per-File Coverage" >> coverage-report.md
+          echo '```' >> coverage-report.md
+          cat coverage-text.txt >> coverage-report.md
+          echo '```' >> coverage-report.md
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: |
+            coverage-report.md
+            lcov.info
+
+  # ============================================================
+  # Doc Build
+  # ============================================================
+  docs:
+    name: Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install system deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libudev-dev libwayland-dev libxkbcommon-dev libvulkan-dev libx11-dev libxi-dev libxrandr-dev libxcursor-dev
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: docs-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: docs-${{ runner.os }}-
+
+      - name: Build docs
+        run: cargo doc --workspace --no-deps
+        env:
+          RUSTDOCFLAGS: "-D warnings"
+
+      - name: Upload docs
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation
+          path: target/doc/
+          retention-days: 14
+
+  # ============================================================
+  # Final Summary
+  # ============================================================
+  ci-summary:
+    name: CI Summary
+    runs-on: ubuntu-latest
+    if: always()
+    needs:
+      - lint
+      - test
+      - test-minimal
+      - msrv
+      - audit
+      - build-release
+      - build-wasm
+      - benchmarks
+      - coverage
+      - docs
+    steps:
+      - name: Download all reports
+        uses: actions/download-artifact@v4
+        with:
+          path: reports/
+        continue-on-error: true
+
+      - name: Generate CI summary
+        shell: bash
+        run: |
+          echo "# CI Summary Report" > summary.md
+          echo "" >> summary.md
+          echo "**Commit:** ${{ github.sha }}" >> summary.md
+          echo "**Branch:** ${{ github.ref_name }}" >> summary.md
+          echo "**Date:** $(date -u '+%Y-%m-%d %H:%M UTC')" >> summary.md
+          echo "" >> summary.md
+
+          echo "## Job Status" >> summary.md
+          echo "| Job | Status |" >> summary.md
+          echo "|-----|--------|" >> summary.md
+          echo "| Lint & Format | ${{ needs.lint.result }} |" >> summary.md
+          echo "| Test (Ubuntu) | ${{ needs.test.result }} |" >> summary.md
+          echo "| Test (Minimal) | ${{ needs.test-minimal.result }} |" >> summary.md
+          echo "| MSRV Check | ${{ needs.msrv.result }} |" >> summary.md
+          echo "| Security Audit | ${{ needs.audit.result }} |" >> summary.md
+          echo "| Release Builds | ${{ needs.build-release.result }} |" >> summary.md
+          echo "| WASM Build | ${{ needs.build-wasm.result }} |" >> summary.md
+          echo "| Benchmarks | ${{ needs.benchmarks.result }} |" >> summary.md
+          echo "| Coverage | ${{ needs.coverage.result }} |" >> summary.md
+          echo "| Documentation | ${{ needs.docs.result }} |" >> summary.md
+          echo "" >> summary.md
+
+          echo "## Artifacts" >> summary.md
+          echo "- mangameeya-windows-x64" >> summary.md
+          echo "- mangameeya-windows-arm64" >> summary.md
+          echo "- mangameeya-linux-x64" >> summary.md
+          echo "- mangameeya-linux-arm64" >> summary.md
+          echo "- mangameeya-macos-x64" >> summary.md
+          echo "- mangameeya-macos-arm64" >> summary.md
+          echo "- mangameeya-wasm" >> summary.md
+          echo "- test-report-{os}" >> summary.md
+          echo "- performance-report" >> summary.md
+          echo "- coverage-report" >> summary.md
+          echo "- criterion-reports" >> summary.md
+          echo "- documentation" >> summary.md
+
+          # Also write to GitHub step summary
+          cat summary.md >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload CI summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-summary
+          path: summary.md

@@ -1,0 +1,79 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+env:
+  CARGO_TERM_COLOR: always
+
+permissions:
+  contents: write
+
+jobs:
+  # ============================================================
+  # Run full CI first
+  # ============================================================
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  # ============================================================
+  # Create Release with all binaries
+  # ============================================================
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: [ci]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Package artifacts
+        shell: bash
+        run: |
+          cd artifacts
+          for dir in mangameeya-*/; do
+            dir_name="${dir%/}"
+            if [ -d "$dir_name" ]; then
+              tar -czf "${dir_name}.tar.gz" -C "$dir_name" . 2>/dev/null || true
+              zip -rj "${dir_name}.zip" "$dir_name"/ 2>/dev/null || true
+            fi
+          done
+          ls -la *.tar.gz *.zip 2>/dev/null || echo "No archives created"
+
+      - name: Generate release notes
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME}"
+          echo "# MangaMeeya ${VERSION}" > release-notes.md
+          echo "" >> release-notes.md
+          echo "## Downloads" >> release-notes.md
+          echo "" >> release-notes.md
+          echo "| Platform | Architecture | File |" >> release-notes.md
+          echo "|----------|-------------|------|" >> release-notes.md
+          echo "| Windows | x86_64 | mangameeya-windows-x64.zip |" >> release-notes.md
+          echo "| Windows | ARM64 | mangameeya-windows-arm64.zip |" >> release-notes.md
+          echo "| Linux | x86_64 | mangameeya-linux-x64.tar.gz |" >> release-notes.md
+          echo "| Linux | ARM64 | mangameeya-linux-arm64.tar.gz |" >> release-notes.md
+          echo "| macOS | x86_64 | mangameeya-macos-x64.tar.gz |" >> release-notes.md
+          echo "| macOS | ARM64 (Apple Silicon) | mangameeya-macos-arm64.tar.gz |" >> release-notes.md
+          echo "| Web | WASM | mangameeya-wasm.zip |" >> release-notes.md
+          echo "" >> release-notes.md
+          echo "## Changes" >> release-notes.md
+          echo "" >> release-notes.md
+          git log --oneline --no-decorate $(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || git rev-list --max-parents=0 HEAD)..HEAD >> release-notes.md 2>/dev/null || echo "Initial release" >> release-notes.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: release-notes.md
+          files: |
+            artifacts/*.tar.gz
+            artifacts/*.zip
+          draft: false
+          prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}

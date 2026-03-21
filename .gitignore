@@ -1,0 +1,10 @@
+/target
+/testdata/generated
+**/*.rs.bk
+Cargo.lock
+*.pdb
+*.exe
+*.dll
+*.so
+*.dylib
+.env

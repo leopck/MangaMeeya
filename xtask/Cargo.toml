@@ -1,0 +1,11 @@
+[package]
+name = "xtask"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+image.workspace = true
+zip = { workspace = true, features = ["deflate-zlib"] }
+rand = "0.9"
+clap = { version = "4", features = ["derive"] }

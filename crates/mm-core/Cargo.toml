@@ -1,0 +1,24 @@
+[package]
+name = "mm-core"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+rayon.workspace = true
+mm-archive.workspace = true
+mm-image.workspace = true
+mm-config.workspace = true
+mm-input.workspace = true
+mm-render.workspace = true
+mm-i18n.workspace = true
+
+[dev-dependencies]
+criterion.workspace = true
+tempfile = "3"
+
+[[bench]]
+name = "core_bench"
+harness = false

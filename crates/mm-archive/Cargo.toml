@@ -1,0 +1,20 @@
+[package]
+name = "mm-archive"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+thiserror.workspace = true
+rayon.workspace = true
+zip.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+criterion.workspace = true
+proptest.workspace = true
+tempfile = "3"
+
+[[bench]]
+name = "archive_bench"
+harness = false

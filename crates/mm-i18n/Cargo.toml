@@ -1,0 +1,10 @@
+[package]
+name = "mm-i18n"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+thiserror.workspace = true
+fluent.workspace = true
+fluent-bundle.workspace = true

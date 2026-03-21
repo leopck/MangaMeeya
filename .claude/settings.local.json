@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd:*)",
+      "Bash(cargo check:*)",
+      "Bash(rustup update:*)",
+      "Bash(cargo fix:*)",
+      "Bash(cargo test:*)",
+      "Bash(python3 -c \"import yaml; [yaml.safe_load\\(open\\(f\\)\\) for f in [''.github/workflows/ci.yml'', ''.github/workflows/nightly.yml'', ''.github/workflows/release.yml'']] and print\\(''All YAML valid''\\)\")"
+    ]
+  }
+}

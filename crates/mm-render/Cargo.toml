@@ -1,0 +1,18 @@
+[package]
+name = "mm-render"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+thiserror.workspace = true
+wgpu.workspace = true
+mm-image.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+criterion.workspace = true
+
+[[bench]]
+name = "render_bench"
+harness = false

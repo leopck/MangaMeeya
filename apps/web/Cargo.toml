@@ -1,0 +1,17 @@
+[package]
+name = "mangameeya-web"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+anyhow.workspace = true
+tracing.workspace = true
+eframe = { workspace = true, features = ["wgpu"] }
+mm-core.workspace = true
+mm-ui.workspace = true
+mm-config.workspace = true
+wasm-bindgen = "0.2"
+web-sys = "0.3"
