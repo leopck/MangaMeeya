@@ -1,8 +1,9 @@
 use std::path::PathBuf;
 
 /// Top-level application state.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub enum AppState {
+    #[default]
     Idle,
     Loading {
         path: PathBuf,
@@ -84,12 +85,6 @@ impl ViewSession {
             PageMode::Single => 1,
             PageMode::Dual | PageMode::DualWithCover => 2,
         }
-    }
-}
-
-impl Default for AppState {
-    fn default() -> Self {
-        AppState::Idle
     }
 }
 

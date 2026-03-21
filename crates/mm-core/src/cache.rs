@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use mm_image::ImageBuffer;
+use std::collections::HashMap;
 
 /// LRU image cache that holds decoded images in memory.
 pub struct ImageCache {
@@ -154,7 +154,7 @@ mod tests {
         cache.get(0);
 
         cache.insert(3, make_image(300)); // Should evict page 1 (least recently used)
-        assert!(cache.contains(0));  // Was accessed, so not evicted
+        assert!(cache.contains(0)); // Was accessed, so not evicted
         assert!(!cache.contains(1)); // Evicted
         assert!(cache.contains(2));
         assert!(cache.contains(3));

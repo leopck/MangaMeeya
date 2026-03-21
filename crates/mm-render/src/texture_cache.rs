@@ -8,8 +8,8 @@ pub struct TextureCache {
 }
 
 struct TextureEntry {
-    width: u32,
-    height: u32,
+    _width: u32,
+    _height: u32,
     // In the real implementation: wgpu::Texture
 }
 
@@ -39,7 +39,13 @@ impl TextureCache {
             let oldest = self.access_order.remove(0);
             self.entries.remove(&oldest);
         }
-        self.entries.insert(page, TextureEntry { width, height });
+        self.entries.insert(
+            page,
+            TextureEntry {
+                _width: width,
+                _height: height,
+            },
+        );
         self.access_order.retain(|&p| p != page);
         self.access_order.push(page);
     }

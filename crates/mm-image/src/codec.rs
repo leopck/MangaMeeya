@@ -48,7 +48,7 @@ pub fn decode(data: &[u8]) -> ImageResult<ImageBuffer> {
         return Err(ImageError::Decode("Empty data".into()));
     }
 
-    let format = detect_format(data);
+    let _format = detect_format(data);
 
     // Use the `image` crate as a universal fallback decoder.
     let dynamic = image::load_from_memory(data)?;
@@ -69,12 +69,7 @@ pub fn decode(data: &[u8]) -> ImageResult<ImageBuffer> {
         let rgb = dynamic.to_rgb8();
         Ok(ImageBuffer::new(rgb.into_raw(), w, h, ColorSpace::Rgb8))
     } else {
-        Ok(ImageBuffer::new(
-            rgba.into_raw(),
-            w,
-            h,
-            ColorSpace::Rgba8,
-        ))
+        Ok(ImageBuffer::new(rgba.into_raw(), w, h, ColorSpace::Rgba8))
     }
 }
 
@@ -135,12 +130,7 @@ mod tests {
         let mut buf = Vec::new();
         let encoder = image::codecs::png::PngEncoder::new(&mut buf);
         encoder
-            .write_image(
-                img.as_raw(),
-                width,
-                height,
-                image::ExtendedColorType::Rgba8,
-            )
+            .write_image(img.as_raw(), width, height, image::ExtendedColorType::Rgba8)
             .unwrap();
         buf
     }
@@ -154,12 +144,7 @@ mod tests {
         let mut buf = Vec::new();
         let encoder = image::codecs::png::PngEncoder::new(&mut buf);
         encoder
-            .write_image(
-                img.as_raw(),
-                width,
-                height,
-                image::ExtendedColorType::Rgba8,
-            )
+            .write_image(img.as_raw(), width, height, image::ExtendedColorType::Rgba8)
             .unwrap();
         buf
     }

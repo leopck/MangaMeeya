@@ -1,5 +1,5 @@
-use crate::{ImageBuffer, ImageResult};
 use super::ImageFilter;
+use crate::{ImageBuffer, ImageResult};
 
 #[derive(Debug, Clone, Copy)]
 pub enum Rotation {

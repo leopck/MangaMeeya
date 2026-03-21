@@ -96,12 +96,14 @@ jobs:
         run: cargo build --workspace
 
       - name: Run all tests
-        run: cargo test --workspace -- --nocapture 2>&1 | tee test-output.txt
+        shell: bash
+        run: cargo test --workspace 2>&1 | tee test-output.txt
 
       - name: Generate test report
         if: always()
         shell: bash
         run: |
+          touch test-output.txt
           echo "# Test Report - ${{ matrix.os }}" > test-report.md
           echo "" >> test-report.md
           echo "**Date:** $(date -u '+%Y-%m-%d %H:%M UTC')" >> test-report.md
@@ -180,10 +182,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Rust 1.85.0 (edition 2024 minimum)
+      - name: Install Rust 1.88.0 (minimum for deps)
         uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: "1.85.0"
+          toolchain: "1.88.0"
 
       - name: Install system deps
         run: |

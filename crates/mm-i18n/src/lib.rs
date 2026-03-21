@@ -69,7 +69,10 @@ fn load_english() -> HashMap<String, String> {
     m.insert("mode.single".into(), "Single Page".into());
     m.insert("mode.dual".into(), "Dual Page".into());
     m.insert("error.open_failed".into(), "Failed to open: {path}".into());
-    m.insert("error.decode_failed".into(), "Failed to decode image".into());
+    m.insert(
+        "error.decode_failed".into(),
+        "Failed to decode image".into(),
+    );
     m
 }
 
@@ -90,8 +93,14 @@ fn load_japanese() -> HashMap<String, String> {
     m.insert("page.last".into(), "最後のページ".into());
     m.insert("mode.single".into(), "単一ページ".into());
     m.insert("mode.dual".into(), "見開きページ".into());
-    m.insert("error.open_failed".into(), "開けませんでした: {path}".into());
-    m.insert("error.decode_failed".into(), "画像のデコードに失敗しました".into());
+    m.insert(
+        "error.open_failed".into(),
+        "開けませんでした: {path}".into(),
+    );
+    m.insert(
+        "error.decode_failed".into(),
+        "画像のデコードに失敗しました".into(),
+    );
     m
 }
 

@@ -14,7 +14,11 @@ fn main() -> Result<()> {
     // Load config
     let config_path = dirs_config_path();
     let config = mm_config::Config::load(&config_path).unwrap_or_default();
-    tracing::info!("Config loaded: {}x{}", config.window.width, config.window.height);
+    tracing::info!(
+        "Config loaded: {}x{}",
+        config.window.width,
+        config.window.height
+    );
 
     // TODO: Phase 2 - Initialize eframe + egui window
     // TODO: Phase 2 - Create wgpu renderer

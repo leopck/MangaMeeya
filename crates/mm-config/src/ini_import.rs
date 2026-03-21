@@ -1,7 +1,4 @@
-use crate::{
-    CacheConfig, Config, ConfigError, ConfigResult, ReadingDirectionConfig, ScrollConfig,
-    ViewingConfig, WindowConfig,
-};
+use crate::{Config, ConfigResult};
 use std::collections::HashMap;
 use std::path::Path;
 

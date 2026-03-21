@@ -75,11 +75,3 @@ mm-config = { path = "crates/mm-config" }
 mm-ui = { path = "crates/mm-ui" }
 mm-plugin = { path = "crates/mm-plugin" }
 mm-i18n = { path = "crates/mm-i18n" }
-
-[workspace.features]
-default = ["simd", "gpu"]
-simd = []
-gpu = []
-wasm = []
-plugin = []
-gamepad = []

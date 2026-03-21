@@ -67,7 +67,13 @@ mod tests {
         natural_sort(&mut items);
         assert_eq!(
             items,
-            vec!["page1.jpg", "page2.jpg", "page3.jpg", "page10.jpg", "page20.jpg"]
+            vec![
+                "page1.jpg",
+                "page2.jpg",
+                "page3.jpg",
+                "page10.jpg",
+                "page20.jpg"
+            ]
         );
     }
 

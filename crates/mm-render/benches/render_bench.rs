@@ -1,4 +1,4 @@
-use criterion::{criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, criterion_group, criterion_main};
 
 fn bench_texture_upload(_c: &mut Criterion) {
     // TODO: Implement with wgpu test harness

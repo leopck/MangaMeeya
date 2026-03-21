@@ -1,5 +1,5 @@
-use crate::{ColorSpace, ImageBuffer, ImageError, ImageResult};
 use super::ImageFilter;
+use crate::{ImageBuffer, ImageError, ImageResult};
 
 pub struct CropFilter {
     x: u32,
@@ -10,7 +10,12 @@ pub struct CropFilter {
 
 impl CropFilter {
     pub fn new(x: u32, y: u32, width: u32, height: u32) -> Self {
-        Self { x, y, width, height }
+        Self {
+            x,
+            y,
+            width,
+            height,
+        }
     }
 }
 
@@ -46,13 +51,19 @@ impl ImageFilter for CropFilter {
                 .copy_from_slice(&image.data[src_offset..src_offset + dst_stride]);
         }
 
-        Ok(ImageBuffer::new(data, self.width, self.height, image.color_space))
+        Ok(ImageBuffer::new(
+            data,
+            self.width,
+            self.height,
+            image.color_space,
+        ))
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::ColorSpace;
 
     #[test]
     fn test_crop_basic() {

@@ -6,7 +6,22 @@
       "Bash(rustup update:*)",
       "Bash(cargo fix:*)",
       "Bash(cargo test:*)",
-      "Bash(python3 -c \"import yaml; [yaml.safe_load\\(open\\(f\\)\\) for f in [''.github/workflows/ci.yml'', ''.github/workflows/nightly.yml'', ''.github/workflows/release.yml'']] and print\\(''All YAML valid''\\)\")"
+      "Bash(python3 -c \"import yaml; [yaml.safe_load\\(open\\(f\\)\\) for f in [''.github/workflows/ci.yml'', ''.github/workflows/nightly.yml'', ''.github/workflows/release.yml'']] and print\\(''All YAML valid''\\)\")",
+      "Bash(gh run:*)",
+      "Bash(where gh:*)",
+      "Bash(curl -s \"https://api.github.com/repos/leopck/MangaMeeya/actions/runs/23385094065/jobs?per_page=30\")",
+      "Bash(curl -sH \"Accept: application/vnd.github.v3+json\" \"https://api.github.com/repos/leopck/MangaMeeya/actions/jobs/68030696270/logs\")",
+      "WebFetch(domain:github.com)",
+      "Bash(cargo fmt:*)",
+      "Bash(cargo build:*)",
+      "Bash(cargo doc:*)",
+      "Bash(rustup component:*)",
+      "Bash(RUSTFLAGS=\"-D warnings\" cargo check --workspace)",
+      "Bash(RUSTFLAGS=\"-D warnings\" cargo check --workspace --no-default-features)",
+      "Bash(RUSTDOCFLAGS=\"-D warnings\" cargo doc --workspace --no-deps)",
+      "Bash(RUSTFLAGS=\"-D warnings\" cargo test --workspace)",
+      "Bash(cargo generate-lockfile:*)",
+      "Bash(cargo clippy:*)"
     ]
   }
 }

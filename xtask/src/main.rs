@@ -2,7 +2,7 @@ use anyhow::Result;
 use clap::{Parser, Subcommand};
 use image::ImageEncoder;
 use std::io::Write;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[derive(Parser)]
 #[command(name = "xtask")]
@@ -38,7 +38,7 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn generate_testdata(output: &PathBuf, large: bool) -> Result<()> {
+fn generate_testdata(output: &Path, large: bool) -> Result<()> {
     std::fs::create_dir_all(output)?;
 
     // Small dataset: 5 images
@@ -65,13 +65,7 @@ fn generate_testdata(output: &PathBuf, large: bool) -> Result<()> {
     Ok(())
 }
 
-fn generate_dataset(
-    base: &PathBuf,
-    name: &str,
-    count: usize,
-    width: u32,
-    height: u32,
-) -> Result<()> {
+fn generate_dataset(base: &Path, name: &str, count: usize, width: u32, height: u32) -> Result<()> {
     let dir = base.join(name);
     std::fs::create_dir_all(&dir)?;
 
@@ -92,12 +86,7 @@ fn generate_dataset(
         let img = generate_manga_page(width, height, i);
         let mut buf = Vec::new();
         let encoder = image::codecs::jpeg::JpegEncoder::new_with_quality(&mut buf, 85);
-        encoder.write_image(
-            img.as_raw(),
-            width,
-            height,
-            image::ExtendedColorType::Rgb8,
-        )?;
+        encoder.write_image(img.as_raw(), width, height, image::ExtendedColorType::Rgb8)?;
 
         let options = zip::write::SimpleFileOptions::default()
             .compression_method(zip::CompressionMethod::Stored);
@@ -120,7 +109,7 @@ fn generate_manga_page(width: u32, height: u32, seed: usize) -> image::RgbImage 
     })
 }
 
-fn generate_format_samples(base: &PathBuf) -> Result<()> {
+fn generate_format_samples(base: &Path) -> Result<()> {
     let dir = base.join("formats");
     std::fs::create_dir_all(&dir)?;
 
@@ -136,7 +125,7 @@ fn generate_format_samples(base: &PathBuf) -> Result<()> {
     Ok(())
 }
 
-fn generate_edge_cases(base: &PathBuf) -> Result<()> {
+fn generate_edge_cases(base: &Path) -> Result<()> {
     let dir = base.join("edge");
     std::fs::create_dir_all(&dir)?;
 
@@ -166,12 +155,7 @@ fn generate_edge_cases(base: &PathBuf) -> Result<()> {
     let valid = generate_manga_page(100, 100, 4);
     let mut buf = Vec::new();
     let encoder = image::codecs::jpeg::JpegEncoder::new(&mut buf);
-    encoder.write_image(
-        valid.as_raw(),
-        100,
-        100,
-        image::ExtendedColorType::Rgb8,
-    )?;
+    encoder.write_image(valid.as_raw(), 100, 100, image::ExtendedColorType::Rgb8)?;
     std::fs::write(dir.join("truncated.jpg"), &buf[..buf.len() / 2])?;
 
     println!("  -> edge case samples created");

@@ -1,5 +1,5 @@
-use crate::{ImageBuffer, ImageError, ImageResult};
 use super::ImageFilter;
+use crate::{ImageBuffer, ImageError, ImageResult};
 
 #[derive(Debug, Clone, Copy)]
 pub enum ResizeAlgorithm {
@@ -24,7 +24,13 @@ impl ResizeFilter {
     }
 
     /// Create a resize filter that fits within the given dimensions while preserving aspect ratio.
-    pub fn fit(max_width: u32, max_height: u32, src_width: u32, src_height: u32, algorithm: ResizeAlgorithm) -> Self {
+    pub fn fit(
+        max_width: u32,
+        max_height: u32,
+        src_width: u32,
+        src_height: u32,
+        algorithm: ResizeAlgorithm,
+    ) -> Self {
         let scale_w = max_width as f64 / src_width as f64;
         let scale_h = max_height as f64 / src_height as f64;
         let scale = scale_w.min(scale_h);

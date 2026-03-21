@@ -2,7 +2,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use crate::natural_sort::natural_sort;
-use crate::{is_image_file, ArchiveEntry, ArchiveError, ArchiveReader, ArchiveResult};
+use crate::{ArchiveEntry, ArchiveError, ArchiveReader, ArchiveResult, is_image_file};
 
 /// Reads image files from a directory, treating it as an archive.
 pub struct FolderReader {
@@ -48,10 +48,13 @@ fn collect_images(
 
         if path.is_dir() {
             collect_images(root, &path, entries, depth + 1, max_depth)?;
-        } else if let Some(name) = path.strip_prefix(root).ok().and_then(|p| p.to_str()) {
-            if is_image_file(name) {
-                entries.push(name.replace('\\', "/"));
-            }
+        } else if let Some(name) = path
+            .strip_prefix(root)
+            .ok()
+            .and_then(|p| p.to_str())
+            .filter(|name| is_image_file(name))
+        {
+            entries.push(name.replace('\\', "/"));
         }
     }
 
@@ -120,10 +123,7 @@ mod tests {
 
     #[test]
     fn test_folder_open() {
-        let dir = create_test_folder(&[
-            ("page1.jpg", b"img1"),
-            ("page2.png", b"img2"),
-        ]);
+        let dir = create_test_folder(&[("page1.jpg", b"img1"), ("page2.png", b"img2")]);
         let reader = FolderReader::open(dir.path()).unwrap();
         assert_eq!(reader.entry_count(), 2);
     }
@@ -138,10 +138,7 @@ mod tests {
 
     #[test]
     fn test_folder_read_all() {
-        let dir = create_test_folder(&[
-            ("page1.jpg", b"d1"),
-            ("page2.jpg", b"d2"),
-        ]);
+        let dir = create_test_folder(&[("page1.jpg", b"d1"), ("page2.jpg", b"d2")]);
         let reader = FolderReader::open(dir.path()).unwrap();
         let entries = reader.read_all().unwrap();
         assert_eq!(entries.len(), 2);

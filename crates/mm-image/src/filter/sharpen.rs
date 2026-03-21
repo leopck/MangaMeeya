@@ -1,5 +1,5 @@
-use crate::{ColorSpace, ImageBuffer, ImageError, ImageResult};
 use super::ImageFilter;
+use crate::{ColorSpace, ImageBuffer, ImageResult};
 
 /// Unsharp mask sharpening filter.
 pub struct SharpenFilter {
@@ -57,26 +57,41 @@ impl ImageFilter for SharpenFilter {
             }
         }
 
-        Ok(ImageBuffer::new(data, image.width, image.height, image.color_space))
+        Ok(ImageBuffer::new(
+            data,
+            image.width,
+            image.height,
+            image.color_space,
+        ))
     }
 }
 
-fn sharpen_gray(image: &ImageBuffer, amount: f32, radius: u32, threshold: u8) -> ImageResult<ImageBuffer> {
+fn sharpen_gray(
+    image: &ImageBuffer,
+    amount: f32,
+    radius: u32,
+    threshold: u8,
+) -> ImageResult<ImageBuffer> {
     let (w, h) = (image.width as usize, image.height as usize);
     let blurred = box_blur(image, radius)?;
     let mut data = image.data.clone();
 
-    for i in 0..w * h {
+    for (i, pixel) in data.iter_mut().enumerate().take(w * h) {
         let orig = image.data[i] as f32;
         let blur = blurred.data[i] as f32;
         let diff = orig - blur;
         if diff.abs() >= threshold as f32 {
             let val = orig + amount * diff;
-            data[i] = val.round().clamp(0.0, 255.0) as u8;
+            *pixel = val.round().clamp(0.0, 255.0) as u8;
         }
     }
 
-    Ok(ImageBuffer::new(data, image.width, image.height, image.color_space))
+    Ok(ImageBuffer::new(
+        data,
+        image.width,
+        image.height,
+        image.color_space,
+    ))
 }
 
 /// Simple box blur for the unsharp mask.
@@ -119,7 +134,12 @@ fn box_blur(image: &ImageBuffer, radius: u32) -> ImageResult<ImageBuffer> {
         }
     }
 
-    Ok(ImageBuffer::new(data, image.width as u32, image.height as u32, image.color_space))
+    Ok(ImageBuffer::new(
+        data,
+        image.width,
+        image.height,
+        image.color_space,
+    ))
 }
 
 #[cfg(test)]

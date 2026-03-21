@@ -52,7 +52,11 @@ pub fn open(path: &Path) -> ArchiveResult<Box<dyn ArchiveReader>> {
         let reader = folder::FolderReader::open(path)?;
         Ok(Box::new(reader))
     } else {
-        match path.extension().and_then(|e| e.to_str()).map(|e| e.to_lowercase()) {
+        match path
+            .extension()
+            .and_then(|e| e.to_str())
+            .map(|e| e.to_lowercase())
+        {
             Some(ext) if ext == "zip" || ext == "cbz" => {
                 let reader = zip_reader::ZipArchiveReader::open(path)?;
                 Ok(Box::new(reader))

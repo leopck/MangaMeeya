@@ -82,7 +82,7 @@ mod tests {
     fn test_double_click_fast() {
         let mut det = DoubleClickDetector::new(500);
         assert!(!det.click()); // First click
-        assert!(det.click());  // Quick second click = double
+        assert!(det.click()); // Quick second click = double
     }
 
     #[test]

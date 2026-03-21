@@ -51,11 +51,12 @@ impl GestureRecognizer {
         let now = Instant::now();
 
         // Check for time-based split
-        if let Some(last_time) = self.last_time {
-            if now.duration_since(last_time).as_millis() > self.split_time_ms as u128 {
-                self.accumulated_dx = 0.0;
-                self.accumulated_dy = 0.0;
-            }
+        if self
+            .last_time
+            .is_some_and(|t| now.duration_since(t).as_millis() > self.split_time_ms as u128)
+        {
+            self.accumulated_dx = 0.0;
+            self.accumulated_dy = 0.0;
         }
 
         self.accumulated_dx += x - lx;
@@ -65,7 +66,11 @@ impl GestureRecognizer {
 
         let dist = (self.accumulated_dx.powi(2) + self.accumulated_dy.powi(2)).sqrt();
         if dist >= self.unit_length as f64 {
-            if let Some(dir) = classify_direction(self.accumulated_dx, self.accumulated_dy, self.threshold_degrees) {
+            if let Some(dir) = classify_direction(
+                self.accumulated_dx,
+                self.accumulated_dy,
+                self.threshold_degrees,
+            ) {
                 // Avoid duplicate consecutive segments
                 if self.segments.last() != Some(&dir) {
                     self.segments.push(dir);
@@ -159,7 +164,7 @@ mod tests {
     fn test_gesture_up_down() {
         let mut g = GestureRecognizer::new(10, 1000, 60);
         g.begin(0.0, 50.0);
-        g.update(0.0, 0.0);  // Up
+        g.update(0.0, 0.0); // Up
         g.update(0.0, 50.0); // Down
         let result = g.end();
         assert_eq!(result, vec![GestureDirection::Up, GestureDirection::Down]);
@@ -169,8 +174,8 @@ mod tests {
     fn test_gesture_no_duplicate_segments() {
         let mut g = GestureRecognizer::new(10, 1000, 60);
         g.begin(0.0, 0.0);
-        g.update(20.0, 0.0);  // Right
-        g.update(40.0, 0.0);  // Still right (should not duplicate)
+        g.update(20.0, 0.0); // Right
+        g.update(40.0, 0.0); // Still right (should not duplicate)
         let result = g.end();
         assert_eq!(result, vec![GestureDirection::Right]);
     }

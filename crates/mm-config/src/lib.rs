@@ -10,6 +10,7 @@ pub type ConfigResult<T> = Result<T, ConfigError>;
 /// Top-level application configuration.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
+#[derive(Default)]
 pub struct Config {
     pub window: WindowConfig,
     pub viewing: ViewingConfig,
@@ -96,25 +97,13 @@ pub struct ImageConfig {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
+#[derive(Default)]
 pub struct PathConfig {
     pub last_open_folder: Option<PathBuf>,
     pub save_folder: Option<PathBuf>,
 }
 
 // === Default implementations ===
-
-impl Default for Config {
-    fn default() -> Self {
-        Self {
-            window: WindowConfig::default(),
-            viewing: ViewingConfig::default(),
-            scrolling: ScrollConfig::default(),
-            cache: CacheConfig::default(),
-            image: ImageConfig::default(),
-            paths: PathConfig::default(),
-        }
-    }
-}
 
 impl Default for WindowConfig {
     fn default() -> Self {
@@ -176,15 +165,6 @@ impl Default for ImageConfig {
             default_save_format: "jpg".into(),
             jpeg_quality: 100,
             png_compression: 9,
-        }
-    }
-}
-
-impl Default for PathConfig {
-    fn default() -> Self {
-        Self {
-            last_open_folder: None,
-            save_folder: None,
         }
     }
 }

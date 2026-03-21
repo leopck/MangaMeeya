@@ -1,7 +1,6 @@
 /target
 /testdata/generated
 **/*.rs.bk
-Cargo.lock
 *.pdb
 *.exe
 *.dll

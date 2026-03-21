@@ -1,5 +1,5 @@
-use crate::{ImageBuffer, ImageResult};
 use super::ImageFilter;
+use crate::{ImageBuffer, ImageResult};
 
 pub struct FlipHorizontal;
 pub struct FlipVertical;
@@ -22,7 +22,12 @@ impl ImageFilter for FlipHorizontal {
             }
         }
 
-        Ok(ImageBuffer::new(data, image.width, image.height, image.color_space))
+        Ok(ImageBuffer::new(
+            data,
+            image.width,
+            image.height,
+            image.color_space,
+        ))
     }
 }
 
@@ -38,11 +43,15 @@ impl ImageFilter for FlipVertical {
         for y in 0..image.height as usize {
             let src_row = y * stride;
             let dst_row = (image.height as usize - 1 - y) * stride;
-            data[dst_row..dst_row + stride]
-                .copy_from_slice(&image.data[src_row..src_row + stride]);
+            data[dst_row..dst_row + stride].copy_from_slice(&image.data[src_row..src_row + stride]);
         }
 
-        Ok(ImageBuffer::new(data, image.width, image.height, image.color_space))
+        Ok(ImageBuffer::new(
+            data,
+            image.width,
+            image.height,
+            image.color_space,
+        ))
     }
 }
 

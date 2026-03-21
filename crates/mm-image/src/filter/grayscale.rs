@@ -1,5 +1,5 @@
-use crate::{ColorSpace, ImageBuffer, ImageError, ImageResult};
 use super::ImageFilter;
+use crate::{ColorSpace, ImageBuffer, ImageResult};
 
 pub struct GrayscaleFilter;
 
@@ -18,13 +18,15 @@ impl ImageFilter for GrayscaleFilter {
         let pixel_count = image.width as usize * image.height as usize;
         let mut data = vec![0u8; pixel_count];
 
-        for i in 0..pixel_count {
+        for (i, pixel) in data.iter_mut().enumerate() {
             let src = i * bpp;
             let r = image.data[src] as f32;
             let g = image.data[src + 1] as f32;
             let b = image.data[src + 2] as f32;
             // ITU-R BT.601 luma coefficients
-            data[i] = (0.299 * r + 0.587 * g + 0.114 * b).round().clamp(0.0, 255.0) as u8;
+            *pixel = (0.299 * r + 0.587 * g + 0.114 * b)
+                .round()
+                .clamp(0.0, 255.0) as u8;
         }
 
         Ok(ImageBuffer::new(
@@ -48,7 +50,7 @@ mod tests {
         let result = GrayscaleFilter.apply(&img).unwrap();
         assert_eq!(result.color_space, ColorSpace::Grayscale);
         assert_eq!(result.pixel(0, 0), &[255]); // white -> 255
-        assert_eq!(result.pixel(1, 0), &[0]);   // black -> 0
+        assert_eq!(result.pixel(1, 0), &[0]); // black -> 0
     }
 
     #[test]

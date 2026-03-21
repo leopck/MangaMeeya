@@ -2,10 +2,8 @@ use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::Path;
 
-use rayon::prelude::*;
-
 use crate::natural_sort::natural_sort;
-use crate::{is_image_file, ArchiveEntry, ArchiveError, ArchiveReader, ArchiveResult};
+use crate::{ArchiveEntry, ArchiveError, ArchiveReader, ArchiveResult, is_image_file};
 
 /// ZIP archive reader that loads all image entries into RAM.
 pub struct ZipArchiveReader {
@@ -103,7 +101,8 @@ mod tests {
     /// Helper to create a test ZIP file with synthetic image data.
     fn create_test_zip(entries: &[(&str, &[u8])]) -> tempfile::NamedTempFile {
         let tmp = tempfile::NamedTempFile::new().unwrap();
-        let mut writer = zip::ZipWriter::new(std::io::BufWriter::new(tmp.as_file().try_clone().unwrap()));
+        let mut writer =
+            zip::ZipWriter::new(std::io::BufWriter::new(tmp.as_file().try_clone().unwrap()));
 
         for (name, data) in entries {
             let options = zip::write::SimpleFileOptions::default()
@@ -128,10 +127,7 @@ mod tests {
 
     #[test]
     fn test_zip_read_entry() {
-        let tmp = create_test_zip(&[
-            ("page1.jpg", b"jpeg_data_1"),
-            ("page2.jpg", b"jpeg_data_2"),
-        ]);
+        let tmp = create_test_zip(&[("page1.jpg", b"jpeg_data_1"), ("page2.jpg", b"jpeg_data_2")]);
         let reader = ZipArchiveReader::open(tmp.path()).unwrap();
         let entry = reader.read_entry(0).unwrap();
         assert_eq!(entry.name, "page1.jpg");
@@ -200,10 +196,7 @@ mod tests {
 
     #[test]
     fn test_zip_unicode_filenames() {
-        let tmp = create_test_zip(&[
-            ("ページ01.jpg", b"data1"),
-            ("ページ02.png", b"data2"),
-        ]);
+        let tmp = create_test_zip(&[("ページ01.jpg", b"data1"), ("ページ02.png", b"data2")]);
         let reader = ZipArchiveReader::open(tmp.path()).unwrap();
         assert_eq!(reader.entry_count(), 2);
         let names = reader.entry_names();

@@ -1,5 +1,5 @@
-/// MangaMeeya UI built on egui.
-/// Phase 2 implementation - currently a stub.
+// MangaMeeya UI built on egui.
+// Phase 2 implementation - currently a stub.
 
 /// UI state for the viewer application.
 pub struct ViewerUi {
