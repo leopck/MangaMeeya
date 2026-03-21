@@ -1,10 +1,20 @@
+pub mod bookmarks;
 pub mod cache;
+pub mod history;
+pub mod loupe;
 pub mod navigation;
+pub mod playlist;
 pub mod prefetch;
 pub mod scroll;
+pub mod slideshow;
 pub mod state;
 
+pub use bookmarks::BookmarkStore;
 pub use cache::ImageCache;
+pub use history::HistoryStore;
+pub use loupe::Loupe;
 pub use navigation::Navigator;
+pub use playlist::Playlist;
 pub use scroll::ScrollState;
+pub use slideshow::Slideshow;
 pub use state::{AppState, PageMode, ReadingDirection, ScaleMode, ViewSession};
