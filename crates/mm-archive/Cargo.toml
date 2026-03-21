@@ -14,6 +14,7 @@ tracing.workspace = true
 criterion.workspace = true
 proptest.workspace = true
 tempfile = "3"
+image.workspace = true
 
 [[bench]]
 name = "archive_bench"

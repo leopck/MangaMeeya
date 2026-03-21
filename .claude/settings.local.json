@@ -21,7 +21,9 @@
       "Bash(RUSTDOCFLAGS=\"-D warnings\" cargo doc --workspace --no-deps)",
       "Bash(RUSTFLAGS=\"-D warnings\" cargo test --workspace)",
       "Bash(cargo generate-lockfile:*)",
-      "Bash(cargo clippy:*)"
+      "Bash(cargo clippy:*)",
+      "Bash(cargo run:*)",
+      "Bash(cargo bench:*)"
     ]
   }
 }

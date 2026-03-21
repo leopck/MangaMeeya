@@ -18,6 +18,8 @@ mm-i18n.workspace = true
 [dev-dependencies]
 criterion.workspace = true
 tempfile = "3"
+image.workspace = true
+zip.workspace = true
 
 [[bench]]
 name = "core_bench"
