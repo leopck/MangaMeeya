@@ -1,0 +1,10 @@
+[package]
+name = "mm-plugin-7z"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+mm-plugin.workspace = true
+mm-image.workspace = true
+anyhow.workspace = true
+sevenz-rust = "0.6"

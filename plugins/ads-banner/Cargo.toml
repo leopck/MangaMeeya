@@ -1,0 +1,11 @@
+[package]
+name = "mm-plugin-ads"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+mm-plugin.workspace = true
+mm-image.workspace = true
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true

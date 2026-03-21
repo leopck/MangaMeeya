@@ -13,6 +13,11 @@ members = [
     "apps/desktop",
     "apps/web",
     "xtask",
+    "plugins/archive-rar",
+    "plugins/archive-7z",
+    "plugins/manga-downloader",
+    "plugins/ads-banner",
+    "plugins/payment-stripe",
 ]
 
 [workspace.package]

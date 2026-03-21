@@ -1,0 +1,15 @@
+[package]
+name = "mm-plugin-downloader"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+mm-plugin.workspace = true
+mm-image.workspace = true
+anyhow.workspace = true
+tracing.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+tempfile = "3"
