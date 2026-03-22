@@ -8,6 +8,7 @@ pub mod prefetch;
 pub mod scroll;
 pub mod slideshow;
 pub mod state;
+pub mod toc;
 
 pub use bookmarks::BookmarkStore;
 pub use cache::ImageCache;
@@ -18,3 +19,4 @@ pub use playlist::Playlist;
 pub use scroll::ScrollState;
 pub use slideshow::Slideshow;
 pub use state::{AppState, PageMode, ReadingDirection, ScaleMode, ViewSession};
+pub use toc::TocStore;

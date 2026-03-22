@@ -9,6 +9,8 @@ thiserror.workspace = true
 rayon.workspace = true
 zip.workspace = true
 tracing.workspace = true
+tar = "0.4"
+flate2 = "1"
 
 [dev-dependencies]
 criterion.workspace = true

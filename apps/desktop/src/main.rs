@@ -1,10 +1,15 @@
 #![windows_subsystem = "windows"]
 
+mod file_ops;
+
 use eframe::egui;
 use mm_config::{BrowsingMode, ScaleFilterConfig, SortMode};
-use mm_core::{BookmarkStore, HistoryStore, Loupe, Playlist, ScrollState, Slideshow};
+use mm_core::{BookmarkStore, HistoryStore, Loupe, Playlist, ScrollState, Slideshow, TocStore};
 use mm_image::ColorSpace;
 use std::path::PathBuf;
+
+/// Supported archive extensions for file dialogs.
+const ARCHIVE_EXTENSIONS: &[&str] = &["zip", "cbz", "tar", "gz", "tgz", "7z", "cb7", "rar", "cbr"];
 
 fn main() -> eframe::Result<()> {
     tracing_subscriber::fmt()
@@ -76,6 +81,19 @@ struct App {
     // Browsing mode
     browsing_mode: BrowsingMode,
 
+    // Table of Contents
+    toc: TocStore,
+    show_toc: bool,
+    toc_label_input: String,
+
+    // Folder tree
+    show_folder_tree: bool,
+    folder_tree_root: Option<PathBuf>,
+    folder_tree_entries: Vec<FolderTreeEntry>,
+
+    // File operations
+    quick_save: file_ops::QuickSaveConfig,
+
     // UI toggles
     show_page_bar: bool,
     show_toolbar_icons: bool,
@@ -89,9 +107,22 @@ struct App {
     show_image_info: bool,
     show_cache_info: bool,
     show_about: bool,
+    show_quick_save_settings: bool,
+    status_message: Option<(String, std::time::Instant)>,
 
     config: mm_config::Config,
     last_frame_time: std::time::Instant,
+}
+
+#[derive(Clone)]
+struct FolderTreeEntry {
+    path: PathBuf,
+    name: String,
+    is_dir: bool,
+    #[allow(dead_code)]
+    depth: usize,
+    #[allow(dead_code)]
+    expanded: bool,
 }
 
 #[derive(Clone, Copy, PartialEq)]
@@ -136,6 +167,7 @@ impl App {
         let bookmarks = BookmarkStore::load(&data_dir.join("bookmarks.json"));
         let history = HistoryStore::load(&data_dir.join("history.json"));
         let playlist = Playlist::load(&data_dir.join("playlist.json"));
+        let toc = TocStore::load(&data_dir.join("toc.json"));
 
         let browsing_mode = config.navigation.browsing_mode;
         let scale_filter = config.image.scale_filter;
@@ -167,6 +199,13 @@ impl App {
             show_thumbnails: false,
             thumbnail_columns,
             thumbnail_textures: Vec::new(),
+            toc,
+            show_toc: false,
+            toc_label_input: String::new(),
+            show_folder_tree: false,
+            folder_tree_root: None,
+            folder_tree_entries: Vec::new(),
+            quick_save: file_ops::QuickSaveConfig::default(),
             loupe: Loupe::new(),
             slideshow: Slideshow::new(5.0),
             bookmarks,
@@ -185,6 +224,8 @@ impl App {
             show_image_info: false,
             show_cache_info: false,
             show_about: false,
+            show_quick_save_settings: false,
+            status_message: None,
             config,
             last_frame_time: std::time::Instant::now(),
         };
@@ -533,6 +574,61 @@ impl App {
         let _ = self.bookmarks.save(&dir.join("bookmarks.json"));
         let _ = self.history.save(&dir.join("history.json"));
         let _ = self.playlist.save(&dir.join("playlist.json"));
+        let _ = self.toc.save(&dir.join("toc.json"));
+    }
+
+    fn build_folder_tree(&mut self) {
+        self.folder_tree_entries.clear();
+        let root = self
+            .folder_tree_root
+            .clone()
+            .or_else(|| self.source_path.as_ref().and_then(|p| p.parent().map(|p| p.to_path_buf())));
+        let Some(root) = root else { return };
+        self.folder_tree_root = Some(root.clone());
+        if let Ok(entries) = std::fs::read_dir(&root) {
+            let mut items: Vec<_> = entries
+                .filter_map(|e| e.ok())
+                .map(|e| {
+                    let path = e.path();
+                    let name = path
+                        .file_name()
+                        .map(|n| n.to_string_lossy().to_string())
+                        .unwrap_or_default();
+                    let is_dir = path.is_dir();
+                    FolderTreeEntry {
+                        path,
+                        name,
+                        is_dir,
+                        depth: 0,
+                        expanded: false,
+                    }
+                })
+                .filter(|e| {
+                    e.is_dir
+                        || e.path
+                            .extension()
+                            .and_then(|ext| ext.to_str())
+                            .is_some_and(|ext| {
+                                ARCHIVE_EXTENSIONS.contains(&ext.to_lowercase().as_str())
+                                    || mm_archive::is_image_file(&e.name)
+                            })
+                })
+                .collect();
+            items.sort_by(|a, b| {
+                mm_archive::natural_sort::natural_cmp(&a.name, &b.name)
+            });
+            self.folder_tree_entries = items;
+        }
+    }
+
+    fn set_status(&mut self, msg: impl Into<String>) {
+        self.status_message = Some((msg.into(), std::time::Instant::now()));
+    }
+
+    fn get_current_image_buffer(&self) -> Option<mm_image::ImageBuffer> {
+        let archive = self.archive.as_ref()?;
+        let entry = archive.read_entry(self.current_page).ok()?;
+        mm_image::codec::decode(&entry.data).ok()
     }
 
     fn toggle_bookmark(&mut self) {
@@ -778,7 +874,7 @@ impl App {
             }
             Some(Act::OpenFile) => {
                 if let Some(path) = rfd::FileDialog::new()
-                    .add_filter("Archives", &["zip", "cbz"])
+                    .add_filter("Archives", ARCHIVE_EXTENSIONS)
                     .add_filter("All files", &["*"])
                     .pick_file()
                 {
@@ -857,7 +953,7 @@ impl App {
             if ui.button("Open File (O)...").clicked() {
                 ui.close_menu();
                 if let Some(p) = rfd::FileDialog::new()
-                    .add_filter("Archives", &["zip", "cbz"])
+                    .add_filter("Archives", ARCHIVE_EXTENSIONS)
                     .add_filter("All files", &["*"])
                     .pick_file()
                 {
@@ -886,6 +982,55 @@ impl App {
                     let page = self.current_page;
                     self.page_textures = vec![None; self.total_pages];
                     self.goto_page(page, ctx);
+                }
+            }
+            ui.separator();
+            if ui.button("Save As (Z)...").clicked() {
+                ui.close_menu();
+                if let Some(img) = self.get_current_image_buffer() {
+                    if let Some(p) = rfd::FileDialog::new()
+                        .add_filter("Images", &["jpg", "png", "webp", "bmp"])
+                        .save_file()
+                    {
+                        match file_ops::save_image(&img, &p) {
+                            Ok(()) => self.set_status(format!("Saved to {}", p.display())),
+                            Err(e) => self.set_status(format!("Save failed: {e}")),
+                        }
+                    }
+                }
+            }
+            ui.menu_button("Quick Save", |ui| {
+                for i in 0..4 {
+                    let label = if let Some(slot) = &self.quick_save.slots[i] {
+                        format!("Slot {} ({})", i + 1, slot.format)
+                    } else {
+                        format!("Slot {} (not configured)", i + 1)
+                    };
+                    if ui.button(&label).clicked() {
+                        ui.close_menu();
+                        if let (Some(slot), Some(img)) = (&self.quick_save.slots[i], self.get_current_image_buffer()) {
+                            let filename = format!("page_{:04}.{}", self.current_page + 1, slot.format);
+                            let path = slot.folder.join(filename);
+                            match file_ops::save_image(&img, &path) {
+                                Ok(()) => self.set_status(format!("Quick saved to {}", path.display())),
+                                Err(e) => self.set_status(format!("Quick save failed: {e}")),
+                            }
+                        }
+                    }
+                }
+                ui.separator();
+                if ui.button("Quick Save Settings...").clicked() {
+                    self.show_quick_save_settings = true;
+                    ui.close_menu();
+                }
+            });
+            if ui.button("Copy To Clipboard (B)").clicked() {
+                ui.close_menu();
+                if let Some(img) = self.get_current_image_buffer() {
+                    match file_ops::copy_to_clipboard(&img) {
+                        Ok(()) => self.set_status("Copied to clipboard"),
+                        Err(e) => self.set_status(format!("Clipboard error: {e}")),
+                    }
                 }
             }
             ui.separator();
@@ -1025,8 +1170,23 @@ impl App {
             }
             ui.checkbox(&mut self.show_toolbar_icons, "Show Tool Bar");
             ui.checkbox(&mut self.show_page_bar, "Show Page Bar");
+            if ui.button("Show Folder Tree Sidebar").clicked() {
+                self.show_folder_tree = !self.show_folder_tree;
+                if self.show_folder_tree {
+                    self.build_folder_tree();
+                }
+                ui.close_menu();
+            }
             if ui.button("Show Bookmarks Sidebar").clicked() {
                 self.show_bookmarks = true;
+                self.show_history = false;
+                self.show_playlist = false;
+                self.show_toc = false;
+                ui.close_menu();
+            }
+            if ui.button("Show Table of Contents").clicked() {
+                self.show_toc = true;
+                self.show_bookmarks = false;
                 self.show_history = false;
                 self.show_playlist = false;
                 ui.close_menu();
@@ -1184,6 +1344,19 @@ impl App {
 
     fn menu_booklist(&mut self, ui: &mut egui::Ui, _ctx: &egui::Context) {
         ui.menu_button("Book List (B)", |ui| {
+            if ui.button("Add/Remove from Table of Contents (C)").clicked() {
+                if let Some(path) = &self.source_path {
+                    if self.toc.has_entry(path, self.current_page) {
+                        self.toc.remove_entry(path, self.current_page);
+                        self.set_status("Removed from Table of Contents");
+                    } else {
+                        let label = format!("Chapter at page {}", self.current_page + 1);
+                        self.toc.add_entry(path, self.current_page, label);
+                        self.set_status("Added to Table of Contents");
+                    }
+                }
+                ui.close_menu();
+            }
             if ui.button("Add to Bookmark List").clicked() {
                 self.toggle_bookmark();
                 ui.close_menu();
@@ -1331,7 +1504,7 @@ impl App {
                     // Open
                     if ui.small_button("Open").clicked() {
                         if let Some(p) = rfd::FileDialog::new()
-                            .add_filter("Archives", &["zip", "cbz"])
+                            .add_filter("Archives", ARCHIVE_EXTENSIONS)
                             .add_filter("All files", &["*"])
                             .pick_file()
                         {
@@ -1709,6 +1882,64 @@ impl App {
                 self.show_settings = false;
             }
         }
+
+        // Quick Save Settings dialog
+        if self.show_quick_save_settings {
+            let mut open = true;
+            egui::Window::new("Quick Save Settings")
+                .open(&mut open)
+                .show(ctx, |ui| {
+                    for i in 0..4 {
+                        ui.group(|ui| {
+                            ui.label(format!("Slot {}:", i + 1));
+                            let slot = self.quick_save.slots[i].get_or_insert_with(|| {
+                                file_ops::QuickSaveSlot {
+                                    folder: data_dir().join("quicksave"),
+                                    format: "jpg".into(),
+                                    quality: 95,
+                                }
+                            });
+                            ui.horizontal(|ui| {
+                                ui.label("Folder:");
+                                let mut folder_str = slot.folder.to_string_lossy().to_string();
+                                if ui.text_edit_singleline(&mut folder_str).changed() {
+                                    slot.folder = PathBuf::from(folder_str);
+                                }
+                                if ui.button("Browse").clicked() {
+                                    if let Some(p) = rfd::FileDialog::new().pick_folder() {
+                                        slot.folder = p;
+                                    }
+                                }
+                            });
+                            ui.horizontal(|ui| {
+                                ui.label("Format:");
+                                ui.radio_value(&mut slot.format, "jpg".into(), "JPG");
+                                ui.radio_value(&mut slot.format, "png".into(), "PNG");
+                                ui.radio_value(&mut slot.format, "webp".into(), "WebP");
+                            });
+                        });
+                    }
+                });
+            if !open {
+                self.show_quick_save_settings = false;
+            }
+        }
+
+        // Status message (auto-dismiss after 3 seconds)
+        if let Some((msg, time)) = &self.status_message {
+            if time.elapsed().as_secs_f32() < 3.0 {
+                egui::Window::new("Status")
+                    .collapsible(false)
+                    .resizable(false)
+                    .anchor(egui::Align2::CENTER_BOTTOM, [0.0, -60.0])
+                    .show(ctx, |ui| {
+                        ui.label(msg);
+                    });
+                ctx.request_repaint();
+            } else {
+                self.status_message = None;
+            }
+        }
     }
 }
 
@@ -1718,6 +1949,60 @@ impl App {
 
 impl App {
     fn draw_side_panels(&mut self, ctx: &egui::Context) {
+        // Folder tree panel (left side)
+        if self.show_folder_tree {
+            egui::SidePanel::left("folder_tree_panel")
+                .default_width(220.0)
+                .show(ctx, |ui| {
+                    ui.horizontal(|ui| {
+                        ui.heading("Folders");
+                        if ui.button("X").clicked() {
+                            self.show_folder_tree = false;
+                        }
+                        if ui.button("Up").clicked() {
+                            if let Some(root) = &self.folder_tree_root {
+                                if let Some(parent) = root.parent() {
+                                    self.folder_tree_root = Some(parent.to_path_buf());
+                                    self.build_folder_tree();
+                                }
+                            }
+                        }
+                    });
+                    if let Some(root) = &self.folder_tree_root {
+                        ui.label(root.to_string_lossy().to_string());
+                    }
+                    ui.separator();
+                    egui::ScrollArea::vertical().show(ui, |ui| {
+                        let entries = self.folder_tree_entries.clone();
+                        let mut open_path = None;
+                        let mut navigate_dir = None;
+                        for entry in &entries {
+                            let prefix = if entry.is_dir { "[D] " } else { "    " };
+                            let is_current = self
+                                .source_path
+                                .as_ref()
+                                .is_some_and(|p| *p == entry.path);
+                            let label = format!("{prefix}{}", entry.name);
+                            let resp = ui.selectable_label(is_current, &label);
+                            if resp.clicked() {
+                                if entry.is_dir {
+                                    navigate_dir = Some(entry.path.clone());
+                                } else {
+                                    open_path = Some(entry.path.clone());
+                                }
+                            }
+                        }
+                        if let Some(dir) = navigate_dir {
+                            self.folder_tree_root = Some(dir);
+                            self.build_folder_tree();
+                        }
+                        if let Some(path) = open_path {
+                            self.open_path(path, ctx);
+                        }
+                    });
+                });
+        }
+
         // File index panel (left side)
         if self.show_file_index {
             egui::SidePanel::left("file_index_panel")
@@ -1746,24 +2031,28 @@ impl App {
                 });
         }
 
-        // Right side panels (bookmarks/history/playlist)
-        if self.show_bookmarks || self.show_history || self.show_playlist {
+        // Right side panels (bookmarks/history/playlist/toc)
+        if self.show_bookmarks || self.show_history || self.show_playlist || self.show_toc {
             egui::SidePanel::right("library_panel")
                 .default_width(250.0)
                 .show(ctx, |ui| {
                     ui.horizontal(|ui| {
-                        ui.selectable_value(&mut self.show_bookmarks, true, "Bookmarks");
-                        ui.selectable_value(&mut self.show_history, true, "History");
-                        ui.selectable_value(&mut self.show_playlist, true, "Playlist");
+                        ui.selectable_value(&mut self.show_bookmarks, true, "BM");
+                        ui.selectable_value(&mut self.show_history, true, "Hist");
+                        ui.selectable_value(&mut self.show_playlist, true, "PL");
+                        ui.selectable_value(&mut self.show_toc, true, "TOC");
                         if ui.button("X").clicked() {
                             self.show_bookmarks = false;
                             self.show_history = false;
                             self.show_playlist = false;
+                            self.show_toc = false;
                         }
                     });
                     ui.separator();
 
-                    if self.show_bookmarks {
+                    if self.show_toc {
+                        self.draw_toc_panel(ui, ctx);
+                    } else if self.show_bookmarks {
                         self.draw_bookmarks_panel(ui, ctx);
                     } else if self.show_history {
                         self.draw_history_panel(ui, ctx);
@@ -1835,7 +2124,7 @@ impl App {
         ui.horizontal(|ui| {
             if ui.button("Add file").clicked()
                 && let Some(p) = rfd::FileDialog::new()
-                    .add_filter("Archives", &["zip", "cbz"])
+                    .add_filter("Archives", ARCHIVE_EXTENSIONS)
                     .pick_file()
             {
                 self.playlist.add(p, None);
@@ -1865,6 +2154,64 @@ impl App {
             if let Some((i, path)) = goto {
                 self.playlist.current_index = i;
                 self.open_path(path, ctx);
+            }
+        });
+    }
+
+    fn draw_toc_panel(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
+        ui.horizontal(|ui| {
+            if ui.button("Add current page").clicked() {
+                if let Some(path) = &self.source_path {
+                    let label = if self.toc_label_input.is_empty() {
+                        format!("Chapter at page {}", self.current_page + 1)
+                    } else {
+                        self.toc_label_input.clone()
+                    };
+                    self.toc.add_entry(path, self.current_page, label);
+                    self.toc_label_input.clear();
+                }
+            }
+        });
+        ui.text_edit_singleline(&mut self.toc_label_input);
+        ui.separator();
+        egui::ScrollArea::vertical().show(ui, |ui| {
+            let entries: Vec<_> = self
+                .source_path
+                .as_ref()
+                .map(|p| {
+                    self.toc
+                        .get_entries(p)
+                        .iter()
+                        .map(|e| (e.page, e.label.clone()))
+                        .collect()
+                })
+                .unwrap_or_default();
+            let mut goto = None;
+            let mut remove = None;
+            for (page, label) in &entries {
+                ui.horizontal(|ui| {
+                    let is_current = *page == self.current_page;
+                    let text = format!(
+                        "{}p.{}: {}",
+                        if is_current { "> " } else { "  " },
+                        page + 1,
+                        label
+                    );
+                    if ui.button(&text).clicked() {
+                        goto = Some(*page);
+                    }
+                    if ui.small_button("x").clicked() {
+                        remove = Some(*page);
+                    }
+                });
+            }
+            if let Some(page) = goto {
+                self.goto_page(page, ctx);
+            }
+            if let Some(page) = remove {
+                if let Some(path) = &self.source_path {
+                    self.toc.remove_entry(path, page);
+                }
             }
         });
     }

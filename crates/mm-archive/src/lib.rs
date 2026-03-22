@@ -1,6 +1,7 @@
 pub mod error;
 pub mod folder;
 pub mod natural_sort;
+pub mod tar_reader;
 pub mod zip_reader;
 
 use std::path::Path;
@@ -59,6 +60,14 @@ pub fn open(path: &Path) -> ArchiveResult<Box<dyn ArchiveReader>> {
         {
             Some(ext) if ext == "zip" || ext == "cbz" => {
                 let reader = zip_reader::ZipArchiveReader::open(path)?;
+                Ok(Box::new(reader))
+            }
+            Some(ext) if ext == "tar" => {
+                let reader = tar_reader::TarArchiveReader::open(path)?;
+                Ok(Box::new(reader))
+            }
+            Some(ext) if ext == "gz" || ext == "tgz" => {
+                let reader = tar_reader::TarArchiveReader::open(path)?;
                 Ok(Box::new(reader))
             }
             Some(ext) => Err(ArchiveError::UnsupportedFormat(ext)),

@@ -2475,8 +2475,10 @@ name = "mangameeya"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "arboard",
  "eframe",
  "egui",
+ "image",
  "mm-archive",
  "mm-config",
  "mm-core",
@@ -2574,9 +2576,11 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "criterion",
+ "flate2",
  "image",
  "proptest",
  "rayon",
+ "tar",
  "tempfile",
  "thiserror 2.0.18",
  "tracing",
@@ -2601,6 +2605,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "criterion",
+ "flate2",
  "image",
  "mm-archive",
  "mm-config",
@@ -2611,6 +2616,7 @@ dependencies = [
  "rayon",
  "serde",
  "serde_json",
+ "tar",
  "tempfile",
  "thiserror 2.0.18",
  "tracing",
@@ -4307,6 +4313,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "tar"
+version = "0.4.45"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "22692a6476a21fa75fdfc11d452fda482af402c008cdbaf3476414e122040973"
+dependencies = [
+ "filetime",
+ "libc",
+ "xattr",
+]
+
+[[package]]
 name = "tempfile"
 version = "3.27.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5804,6 +5821,16 @@ name = "x11rb-protocol"
 version = "0.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ea6fc2961e4ef194dcbfe56bb845534d0dc8098940c7e5c012a258bfec6701bd"
+
+[[package]]
+name = "xattr"
+version = "1.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "32e45ad4206f6d2479085147f02bc2ef834ac85886624a23575ae137c8aa8156"
+dependencies = [
+ "libc",
+ "rustix 1.1.4",
+]
 
 [[package]]
 name = "xcursor"
