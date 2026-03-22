@@ -13,6 +13,21 @@ pub enum Command {
     LastPage,
     JumpToPage,
 
+    // Navigation - N-page jumps
+    JumpForward10,
+    JumpForward20,
+    JumpForward50,
+    JumpBackward10,
+    JumpBackward20,
+    JumpBackward50,
+
+    // Folder navigation
+    NextFolder,
+    PrevFolder,
+    NextSubFolder,
+    PrevSubFolder,
+    UpOneLevel,
+
     // Scrolling
     ScrollUp,
     ScrollDown,
@@ -38,6 +53,18 @@ pub enum Command {
     ToggleSinglePage,
     ToggleDualWithCover,
     ToggleReadingDirection,
+    ToggleThumbnailView,
+    ToggleAutoSplit,
+    ShowFileIndex,
+    ShowGoToPageDialog,
+    ShowImageInfo,
+    ShowCacheInfo,
+    ShowAbout,
+
+    // Browsing modes
+    SetBrowsingNoRepeat,
+    SetBrowsingRepeat,
+    SetBrowsingContinuous,
 
     // File operations
     OpenFile,
@@ -67,6 +94,7 @@ pub enum Command {
     ToggleThumbnail,
     ToggleBookContents,
     TogglePageInfo,
+    ToggleToolbarIcons,
     ShowSettings,
 
     // Image processing
@@ -77,6 +105,20 @@ pub enum Command {
     FlipVertical,
     ApplyFilter,
     ToggleLoupe,
+
+    // Scaling
+    SetScaleFitWindowToImage,
+    SetScaleFitWindow2Pages,
+    SetScaleManual,
+    SetScaleCustom,
+    ToggleDownscaleOnly,
+    SetFilterHalftone,
+    SetFilterPixelAvg,
+    SetFilterLanczos,
+    SetFilterBicubic,
+    SetFilterBilinear,
+    SetFilterPixelAvgWeakSharpen,
+    SetFilterPixelAvgStrongSharpen,
 
     // Slide show
     SlideShowStart,
@@ -106,12 +148,28 @@ impl Command {
             Command::PrevPage => "Previous Page",
             Command::FirstPage => "First Page",
             Command::LastPage => "Last Page",
+            Command::JumpForward10 => "Jump Forward 10 Pages",
+            Command::JumpForward20 => "Jump Forward 20 Pages",
+            Command::JumpForward50 => "Jump Forward 50 Pages",
+            Command::JumpBackward10 => "Jump Backward 10 Pages",
+            Command::JumpBackward20 => "Jump Backward 20 Pages",
+            Command::JumpBackward50 => "Jump Backward 50 Pages",
+            Command::NextFolder => "Next Folder",
+            Command::PrevFolder => "Previous Folder",
             Command::ToggleFullscreen => "Toggle Fullscreen",
             Command::ToggleDualPage => "Toggle Dual Page",
+            Command::ToggleThumbnailView => "Toggle Thumbnail View",
+            Command::ToggleAutoSplit => "Toggle Auto Split",
+            Command::SetBrowsingContinuous => "Continuous Browsing",
+            Command::SetBrowsingRepeat => "Repeat Browsing",
+            Command::SetBrowsingNoRepeat => "No Repeat Browsing",
             Command::OpenFile => "Open File",
             Command::Quit => "Quit",
             Command::ZoomIn => "Zoom In",
             Command::ZoomOut => "Zoom Out",
+            Command::SetScaleFitWindowToImage => "Fit Window to Image",
+            Command::SetScaleFitWindow2Pages => "Fit Window to 2 Pages",
+            Command::ToggleDownscaleOnly => "Toggle Downscale Only",
             _ => "Unknown",
         }
     }
@@ -125,6 +183,8 @@ mod tests {
     fn test_command_display_name() {
         assert_eq!(Command::NextPage.display_name(), "Next Page");
         assert_eq!(Command::Quit.display_name(), "Quit");
+        assert_eq!(Command::JumpForward10.display_name(), "Jump Forward 10 Pages");
+        assert_eq!(Command::ToggleAutoSplit.display_name(), "Toggle Auto Split");
     }
 
     #[test]

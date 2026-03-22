@@ -18,6 +18,8 @@ pub struct Config {
     pub cache: CacheConfig,
     pub image: ImageConfig,
     pub paths: PathConfig,
+    #[serde(default)]
+    pub navigation: NavigationConfig,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -40,6 +42,11 @@ pub struct ViewingConfig {
     pub auto_dual_detect: bool,
     pub centering: bool,
     pub hide_cursor: bool,
+    pub auto_split: bool,
+    pub auto_split_threshold: f32,
+    pub downscale_only: bool,
+    pub thumbnail_columns: u32,
+    pub thumbnail_size: u32,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
@@ -55,6 +62,8 @@ pub enum ScaleModeConfig {
     FitHeight,
     FitScreen,
     Original,
+    FitWindowToImage,
+    FitWindow2Pages,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
@@ -89,10 +98,45 @@ pub struct CacheConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
 pub struct ImageConfig {
-    pub scale_filter: u32,
+    pub scale_filter: ScaleFilterConfig,
     pub default_save_format: String,
     pub jpeg_quality: u8,
     pub png_compression: u8,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+pub enum ScaleFilterConfig {
+    Nearest,
+    Bilinear,
+    Bicubic,
+    Lanczos,
+    PixelAveraging,
+    Halftone,
+    PixelAvgWeakSharpen,
+    PixelAvgStrongSharpen,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
+pub struct NavigationConfig {
+    pub browsing_mode: BrowsingMode,
+    pub sort_files: SortMode,
+    pub sort_folders: SortMode,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+pub enum BrowsingMode {
+    NoRepeat,
+    Repeat,
+    Continuous,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+pub enum SortMode {
+    Name,
+    Date,
+    Size,
+    Extension,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -127,6 +171,11 @@ impl Default for ViewingConfig {
             auto_dual_detect: true,
             centering: false,
             hide_cursor: false,
+            auto_split: false,
+            auto_split_threshold: 1.3,
+            downscale_only: false,
+            thumbnail_columns: 8,
+            thumbnail_size: 200,
         }
     }
 }
@@ -161,10 +210,20 @@ impl Default for CacheConfig {
 impl Default for ImageConfig {
     fn default() -> Self {
         Self {
-            scale_filter: 6,
+            scale_filter: ScaleFilterConfig::PixelAvgWeakSharpen,
             default_save_format: "jpg".into(),
             jpeg_quality: 100,
             png_compression: 9,
+        }
+    }
+}
+
+impl Default for NavigationConfig {
+    fn default() -> Self {
+        Self {
+            browsing_mode: BrowsingMode::Continuous,
+            sort_files: SortMode::Name,
+            sort_folders: SortMode::Name,
         }
     }
 }
@@ -254,5 +313,36 @@ mod tests {
         let parsed: Config = toml::from_str(&toml_str).unwrap();
         assert_eq!(parsed.window.width, config.window.width);
         assert_eq!(parsed.cache.gc_limit_mb, config.cache.gc_limit_mb);
+    }
+
+    #[test]
+    fn test_new_viewing_config_fields() {
+        let config = ViewingConfig::default();
+        assert!(!config.auto_split);
+        assert_eq!(config.auto_split_threshold, 1.3);
+        assert!(!config.downscale_only);
+        assert_eq!(config.thumbnail_columns, 8);
+        assert_eq!(config.thumbnail_size, 200);
+    }
+
+    #[test]
+    fn test_navigation_config() {
+        let config = NavigationConfig::default();
+        assert_eq!(config.browsing_mode, BrowsingMode::Continuous);
+        assert_eq!(config.sort_files, SortMode::Name);
+        assert_eq!(config.sort_folders, SortMode::Name);
+    }
+
+    #[test]
+    fn test_scale_filter_config() {
+        let config = ImageConfig::default();
+        assert_eq!(config.scale_filter, ScaleFilterConfig::PixelAvgWeakSharpen);
+    }
+
+    #[test]
+    fn test_new_scale_modes() {
+        let fit_window = ScaleModeConfig::FitWindowToImage;
+        let fit_2pages = ScaleModeConfig::FitWindow2Pages;
+        assert_ne!(fit_window, fit_2pages);
     }
 }

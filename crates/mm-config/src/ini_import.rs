@@ -92,7 +92,17 @@ pub fn import_ini(path: &Path) -> ConfigResult<Config> {
 
         // Image
         if let Some(v) = cfg.get("ScaleFilter") {
-            config.image.scale_filter = v.parse().unwrap_or(config.image.scale_filter);
+            config.image.scale_filter = match v.parse::<u32>() {
+                Ok(0) => crate::ScaleFilterConfig::Nearest,
+                Ok(1) => crate::ScaleFilterConfig::Bilinear,
+                Ok(2) => crate::ScaleFilterConfig::Bicubic,
+                Ok(3) => crate::ScaleFilterConfig::Lanczos,
+                Ok(4) => crate::ScaleFilterConfig::PixelAveraging,
+                Ok(5) => crate::ScaleFilterConfig::Halftone,
+                Ok(6) => crate::ScaleFilterConfig::PixelAvgWeakSharpen,
+                Ok(7) => crate::ScaleFilterConfig::PixelAvgStrongSharpen,
+                _ => config.image.scale_filter,
+            };
         }
         if let Some(v) = cfg.get("SaveJpgQuality") {
             config.image.jpeg_quality = v.parse().unwrap_or(config.image.jpeg_quality);
@@ -195,5 +205,6 @@ mod tests {
         assert_eq!(config.cache.file_cache_size_mb, 200);
         assert_eq!(config.cache.gc_limit_mb, 300);
         assert_eq!(config.image.jpeg_quality, 100);
+        assert_eq!(config.image.scale_filter, crate::ScaleFilterConfig::PixelAvgWeakSharpen);
     }
 }
